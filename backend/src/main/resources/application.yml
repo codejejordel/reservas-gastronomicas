@@ -3,7 +3,7 @@ spring:
     name: reservasfy
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/reservas_v0
+    url: jdbc:postgresql://localhost:5432/reservas_v1
     username: postgres
     password: admin
     driver-class-name: org.postgresql.Driver
@@ -45,6 +45,9 @@ server:
 app:
   cors:
     allowed-origins: http://localhost:3000,http://localhost:5173
+  jwt:
+    secret: ${JWT_SECRET:cambiar-esto-en-produccion-debe-ser-largo-y-aleatorio-minimo-256-bits}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 management:
   endpoints:
