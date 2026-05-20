@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* ── Tailwind v4 theme tokens from DESIGN.MD ────────── */
+@theme {
+  /* Colors */
+  --color-surface:                   #f5fafa;
+  --color-surface-dim:               #d5dbdb;
+  --color-surface-bright:            #f5fafa;
+  --color-surface-container-lowest:  #ffffff;
+  --color-surface-container-low:     #eff5f4;
+  --color-surface-container:         #e9efef;
+  --color-surface-container-high:    #e4e9e9;
+  --color-surface-container-highest: #dee4e3;
+  --color-surface-variant:           #dee4e3;
+  --color-on-surface:                #171d1d;
+  --color-on-surface-variant:        #3d4949;
+  --color-inverse-surface:           #2c3132;
+  --color-inverse-on-surface:        #ecf2f1;
+  --color-outline:                   #6c7a79;
+  --color-outline-variant:           #bcc9c9;
+  --color-surface-tint:              #00696b;
+  --color-background:                #f5fafa;
+  --color-on-background:             #171d1d;
+
+  --color-primary:                   #00696b;
+  --color-on-primary:                #ffffff;
+  --color-primary-container:         #07a7a9;
+  --color-on-primary-container:      #003536;
+  --color-inverse-primary:           #5bd9da;
+  --color-primary-fixed:             #7bf5f7;
+  --color-primary-fixed-dim:         #5bd9da;
+  --color-on-primary-fixed:          #002020;
+  --color-on-primary-fixed-variant:  #004f50;
+
+  --color-secondary:                 #3b6566;
+  --color-on-secondary:              #ffffff;
+  --color-secondary-container:       #beebec;
+  --color-on-secondary-container:    #416b6c;
+  --color-secondary-fixed:           #beebec;
+  --color-secondary-fixed-dim:       #a3cfcf;
+  --color-on-secondary-fixed:        #002021;
+  --color-on-secondary-fixed-variant:#224d4e;
+
+  --color-tertiary:                  #96481c;
+  --color-on-tertiary:               #ffffff;
+  --color-tertiary-container:        #db7e4e;
+  --color-on-tertiary-container:     #531f00;
+  --color-tertiary-fixed:            #ffdbcb;
+  --color-tertiary-fixed-dim:        #ffb692;
+  --color-on-tertiary-fixed:         #341000;
+  --color-on-tertiary-fixed-variant: #783205;
+
+  --color-error:                     #ba1a1a;
+  --color-on-error:                  #ffffff;
+  --color-error-container:           #ffdad6;
+  --color-on-error-container:        #93000a;
+
+  /* Typography */
+  --font-serif:   'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  /* Spacing (8px base grid) */
+  --spacing-xs:             4px;
+  --spacing-sm:             12px;
+  --spacing-md:             24px;
+  --spacing-lg:             48px;
+  --spacing-xl:             80px;
+  --spacing-gutter:         24px;
+  --spacing-margin-mobile:  16px;
+  --spacing-margin-desktop: 48px;
+
+  /* Border radius */
+  --radius-sm:   0.25rem;
+  --radius:      0.5rem;
+  --radius-md:   0.75rem;
+  --radius-lg:   1rem;
+  --radius-xl:   1.5rem;
+  --radius-full: 9999px;
+}
+
+/* ── Base ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-on-surface);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body { margin: 0; }
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Auth hero keyframes ────────────────────────────────── */
+@keyframes blob-morph {
+  0%, 100% { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; }
+  33%       { border-radius: 40% 60% 45% 55% / 60% 40% 55% 45%; }
+  66%       { border-radius: 55% 45% 60% 40% / 45% 55% 50% 50%; }
+}
+
+@keyframes blob-morph-2 {
+  0%, 100% { border-radius: 40% 60% 45% 55% / 55% 45% 60% 40%; }
+  50%       { border-radius: 60% 40% 55% 45% / 40% 60% 45% 55%; }
+}
+
+@keyframes aurora-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -30px) scale(1.08); }
+  66%       { transform: translate(-20px, 25px) scale(0.96); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+@keyframes wave-shift {
+  0%, 100% { d: path('M0,32 C180,80 360,-16 540,32 C720,80 900,-16 1080,32 L1080,80 L0,80 Z'); }
+  50%       { d: path('M0,48 C180,0 360,80 540,48 C720,0 900,80 1080,48 L1080,80 L0,80 Z'); }
+}
+
+.blob   { animation: blob-morph   18s ease-in-out infinite; }
+.blob-2 { animation: blob-morph-2 14s ease-in-out infinite; }
+.blob-3 { animation: blob-morph   22s ease-in-out infinite reverse; }
