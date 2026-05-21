@@ -2,10 +2,20 @@ spring:
   application:
     name: reservasfy
 
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/reservas_v1
+#    username: postgres
+#    password: admin
+#    driver-class-name: org.postgresql.Driver
+#    hikari:
+#      maximum-pool-size: 10
+#      minimum-idle: 2
+#      connection-timeout: 30000
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/reservas_v1
-    username: postgres
-    password: admin
+    url: ${DB_HOST}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -22,7 +32,7 @@ spring:
         jdbc:
           time_zone: UTC
     open-in-view: false
-    show-sql: true
+    show-sql: false
 
   flyway:
     enabled: true
