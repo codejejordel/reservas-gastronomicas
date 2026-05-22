@@ -2,6 +2,8 @@ package com.reservas.app.sucursal.service;
 
 import com.reservas.app.restaurante.entity.Restaurante;
 import com.reservas.app.restaurante.repository.RestauranteRepository;
+import com.reservas.app.sucursal.configuracion.entity.ConfiguracionSucursal;
+import com.reservas.app.sucursal.configuracion.repository.ConfiguracionSucursalRepository;
 import com.reservas.app.sucursal.dto.CreateSucursalRequestDto;
 import com.reservas.app.sucursal.dto.SucursalResponseDto;
 import com.reservas.app.sucursal.dto.UpdateSucursalRequestDto;
@@ -21,6 +23,7 @@ public class SucursalService {
 
     private final SucursalRepository sucursalRepository;
     private final RestauranteRepository restauranteRepository;
+    private final ConfiguracionSucursalRepository configuracionRepository;
 
     @Transactional
     public SucursalResponseDto create(CreateSucursalRequestDto request) {
@@ -52,7 +55,14 @@ public class SucursalService {
         boolean esPrimera = sucursalRepository.countByRestauranteId(request.getRestauranteId()) == 0;
         sucursal.setEsPrincipal(esPrimera);
 
-        return toDto(sucursalRepository.save(sucursal));
+        sucursal = sucursalRepository.save(sucursal);
+
+        // Crear configuración con defaults inteligentes
+        ConfiguracionSucursal config = new ConfiguracionSucursal();
+        config.setSucursal(sucursal);
+        configuracionRepository.save(config);
+
+        return toDto(sucursal);
     }
 
     public SucursalResponseDto getById(Long id) {
