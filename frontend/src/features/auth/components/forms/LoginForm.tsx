@@ -6,6 +6,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { loginSchema, type LoginFormData } from '@/features/auth/schemas/loginSchema'
 import { useLogin } from '@/features/auth/hooks/useLogin'
 import { InputWithIcon } from '@/shared/ui/InputWithIcon'
+import { Alert } from '@/shared/ui/Alert'
 import { SocialButtons } from './SocialButtons'
 import { FormDivider } from './FormDivider'
 import { SuccessState } from './SuccessState'
@@ -17,7 +18,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onGoToRegister }: LoginFormProps) {
   const [showPass, setShowPass] = useState(false)
-  const { mutate, isPending, isSuccess } = useLogin()
+  const { mutate, isPending, isSuccess, isError, error } = useLogin()
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -101,6 +102,21 @@ export function LoginForm({ onGoToRegister }: LoginFormProps) {
               >
                 {errors.password.message}
               </motion.p>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3"
+              >
+                <Alert variant="error">
+                  {error instanceof Error ? error.message : 'Credenciales inválidas'}
+                </Alert>
+              </motion.div>
             )}
           </AnimatePresence>
         </FadeUp>

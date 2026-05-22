@@ -56,6 +56,16 @@
   --color-error-container:           #ffdad6;
   --color-on-error-container:        #93000a;
 
+  --color-success:                   #0d7d2e;
+  --color-on-success:                #ffffff;
+  --color-success-container:         #b8f5b9;
+  --color-on-success-container:      #002106;
+
+  --color-warning:                   #7d5700;
+  --color-on-warning:                #ffffff;
+  --color-warning-container:         #ffdeb8;
+  --color-on-warning-container:      #271900;
+
   /* Typography */
   --font-serif:   'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-sans:    'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;

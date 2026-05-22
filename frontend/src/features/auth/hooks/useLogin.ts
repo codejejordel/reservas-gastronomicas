@@ -1,14 +1,16 @@
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import type { LoginFormData } from '@/features/auth/schemas/loginSchema'
-
-async function loginMock(data: LoginFormData): Promise<{ token: string }> {
-  await new Promise((r) => setTimeout(r, 1200))
-  if (data.email === 'error@test.com') throw new Error('Credenciales incorrectas')
-  return { token: 'mock-token-123' }
-}
+import { loginWithSupabase } from '@/features/auth/services/authSupabaseService'
 
 export function useLogin() {
+  const navigate = useNavigate()
+
   return useMutation({
-    mutationFn: loginMock,
+    mutationFn: (data: LoginFormData) =>
+      loginWithSupabase({ email: data.email, password: data.password }),
+    onSuccess: () => {
+      navigate({ to: '/dashboard' })
+    },
   })
 }
