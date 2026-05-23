@@ -9,10 +9,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/usuario")
@@ -26,5 +25,23 @@ public class UsuarioController {
     @Operation(summary = "Crear nuevo usuario desde el back office")
     public ResponseEntity<UsuarioResponseDto> create(@Valid @RequestBody RegistroRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.createUser(request));
+    }
+
+    @GetMapping
+    @Operation(summary = "Listado de todos los usuarios")
+    public ResponseEntity<List<UsuarioResponseDto>> getUsuarios() {
+        return ResponseEntity.ok(usuarioService.list());
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Obtener usuario por ID")
+    public ResponseEntity<UsuarioResponseDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.getById(id));
+    }
+
+    @GetMapping("/dni/{dni}")
+    @Operation(summary = "Obtener usuario por DNI")
+    public ResponseEntity<UsuarioResponseDto> getByDni(@PathVariable String dni) {
+        return ResponseEntity.ok(usuarioService.getByDni(dni));
     }
 }

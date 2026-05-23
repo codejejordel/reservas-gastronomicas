@@ -11,6 +11,7 @@ public class UsuarioResponseDto {
     private String nombreCompleto;
     private String email;
     private String telefono;
+    private String dni;
     private RolUsuario rol;
     private Boolean activo;
     private Boolean onboardingCompleto;

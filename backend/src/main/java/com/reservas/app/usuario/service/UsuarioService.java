@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -21,7 +23,33 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public LoginResponseDto login(LoginRequestDto request) {
+    public List<UsuarioResponseDto> list() {
+        return usuarioRepository.findAll().stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    public UsuarioResponseDto getById(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        return toDto(usuario);
+    }
+
+    public UsuarioResponseDto getByDni(String dni) {
+        Usuario usuario = usuarioRepository.findByDni(dni)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        return toDto(usuario);
+    }
+
+    private UsuarioResponseDto toDto(Usuario u) {
+        return new UsuarioResponseDto(
+                u.getId(), u.getNombreCompleto(), u.getEmail(),
+                u.getTelefono(), u.getDni(), u.getRol(), u.getActivo(), u.getOnboardingCompleto()
+        );
+    }
+
+    public LoginResponseDto
+    login(LoginRequestDto request) {
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas"));
 
@@ -47,19 +75,18 @@ public class UsuarioService {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya está registrado");
         }
+        if (request.getDni() != null && usuarioRepository.existsByDni(request.getDni())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El DNI ya está registrado");
+        }
 
         Usuario usuario = new Usuario();
         usuario.setNombreCompleto(request.getNombreCompleto());
         usuario.setEmail(request.getEmail());
         usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         usuario.setTelefono(request.getTelefono());
+        usuario.setDni(request.getDni());
         usuario.setRol(request.getRol());
 
-        usuario = usuarioRepository.save(usuario);
-
-        return new UsuarioResponseDto(
-                usuario.getId(), usuario.getNombreCompleto(), usuario.getEmail(),
-                usuario.getTelefono(), usuario.getRol(), usuario.getActivo(), usuario.getOnboardingCompleto()
-        );
+        return toDto(usuarioRepository.save(usuario));
     }
 }

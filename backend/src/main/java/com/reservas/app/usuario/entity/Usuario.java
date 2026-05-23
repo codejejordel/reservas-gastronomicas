@@ -11,6 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "usuario")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Usuario extends BaseEntity {
 
     @Column(name = "nombre_completo", nullable = false, length = 200)
@@ -31,6 +32,9 @@ public class Usuario extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @Column(unique = true, length = 20)
+    private String dni;
 
     @Column(name = "onboarding_completo", nullable = false)
     private Boolean onboardingCompleto = false;
