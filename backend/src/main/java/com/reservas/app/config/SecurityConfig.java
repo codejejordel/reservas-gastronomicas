@@ -1,22 +1,24 @@
 package com.reservas.app.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Configuración inicial de seguridad.
- *
- * IMPORTANTE: en esta primera versión está TODO abierto para facilitar el desarrollo.
- * En el próximo paso se va a incorporar el filtro JWT, autenticación y autorización por roles.
- */
 @Configuration
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -24,8 +26,32 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                );
+                        // Auth
+                        .requestMatchers("/auth/**").permitAll()
+                        // Swagger / OpenAPI
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Actuator
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+
+                        //Usuario
+                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
+
+                        //Cliente
+                        .requestMatchers(HttpMethod.POST, "/cliente").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/reserva").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/reserva/codigo/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/reserva/*/cancelar").permitAll()
+
+                        //Sucursal
+                        .requestMatchers(HttpMethod.GET, "/sucursal/*/horario/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sucursal/*/bloqueo/vigentes").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sucursal/*/resena").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sucursal/*/foto").permitAll()
+
+                        // Todo lo demás requiere autenticación
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
