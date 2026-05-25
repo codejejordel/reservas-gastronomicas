@@ -44,6 +44,7 @@ services:
     container_name: reservas-backend
     restart: unless-stopped
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-reservas}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-reservas_user}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-reservas_pass_dev}
@@ -55,18 +56,19 @@ services:
     networks:
       - reservas-net
 
+  # descomentar cuando se inicialice React
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: reservas-frontend
-    restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT:-3000}:80"
-    depends_on:
-      - backend
-    networks:
-      - reservas-net
+     build:
+       context: ./frontend
+       dockerfile: Dockerfile
+     container_name: reservas-frontend
+     restart: unless-stopped
+     ports:
+       - "${FRONTEND_PORT:-3000}:80"
+     depends_on:
+       - backend
+     networks:
+       - reservas-net
 
 volumes:
   postgres-data:

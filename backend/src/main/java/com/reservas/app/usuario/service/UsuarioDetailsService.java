@@ -26,7 +26,7 @@ public class UsuarioDetailsService implements UserDetailsService {
         return User.builder()
                 .username(usuario.getEmail())
                 .password(usuario.getPassword())
-                .authorities(List.of(new SimpleGrantedAuthority(usuario.getRol().name())))
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())))
                 .disabled(!usuario.getActivo())
                 .build();
     }

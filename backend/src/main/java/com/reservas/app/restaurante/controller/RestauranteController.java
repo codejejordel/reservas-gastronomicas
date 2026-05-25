@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,12 +49,12 @@ public class RestauranteController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar datos o branding del restaurante")
-    public ResponseEntity<RestauranteResponseDto> update(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateRestauranteRequestDto request) {
+    public ResponseEntity<RestauranteResponseDto> update(@PathVariable Long id,
+                                                         @Valid @RequestBody UpdateRestauranteRequestDto request) {
         return ResponseEntity.ok(restauranteService.update(id, request));
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN','ADMIN_RESTAURANTE')")
     @DeleteMapping("/{id}")
     @Operation(summary = "Desactivar restaurante (soft delete)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
