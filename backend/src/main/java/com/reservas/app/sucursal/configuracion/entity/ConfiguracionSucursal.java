@@ -61,4 +61,14 @@ public class ConfiguracionSucursal extends BaseEntity {
 
     @Column(name = "umbral_no_shows_bloqueo", nullable = false)
     private Integer umbralNoShowsBloqueo = 3;
+
+    @Column(name = "mp_access_token")
+    private String mpAccessToken;
+
+    @Column(name = "mp_public_key")
+    private String mpPublicKey;
+
+    @Column(name = "mp_conectado")
+    private boolean mpConectado= false;
+
 }

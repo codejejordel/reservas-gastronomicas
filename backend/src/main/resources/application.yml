@@ -64,6 +64,12 @@ app:
   jwt:
     secret: ${JWT_SECRET:cambiar-esto-en-produccion-debe-ser-largo-y-aleatorio-minimo-256-bits}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  mercadopago:
+    access-token: ${MP_ACCESS_TOKEN:}
+    webhook-secret: ${MP_WEBHOOK_SECRET:}
+    webhook-base-url: ${MP_WEBHOOK_BASE_URL:http://localhost:8080/api}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}
 
 management:
   endpoints:
