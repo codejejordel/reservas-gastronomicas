@@ -52,42 +52,61 @@ export function makeDefaultTables(): Table[] {
   return []
 }
 
+export interface RestaurantData {
+  nombrePublico: string
+  razonSocial: string
+  cuit: string
+  tipoCocina: string
+  ciudadPrincipal: string
+  descripcion: string
+  slogan: string
+  emailComercial: string
+  slug: string
+}
+
+export function makeDefaultRestaurant(): RestaurantData {
+  return {
+    nombrePublico: '',
+    razonSocial: '',
+    cuit: '',
+    tipoCocina: '',
+    ciudadPrincipal: '',
+    descripcion: '',
+    slogan: '',
+    emailComercial: '',
+    slug: '',
+  }
+}
+
+export function slugify(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
+
 export type FontFamily = 'sora' | 'playfair' | 'inter' | 'dm-sans'
 export type BorderRadiusStyle = 'minimal' | 'soft' | 'rounded'
 
 export interface BrandSettings {
   logoDataUrl: string | null
   bannerDataUrl: string | null
-  displayName: string
-  city: string
-  slogan: string
-  description: string
   primaryColor: string
   accentColor: string
   headingFont: FontFamily
   bodyFont: FontFamily
   borderRadius: BorderRadiusStyle
-  slug: string
   instagram: string
   facebook: string
   website: string
 }
 
-export function makeDefaultBrand(venueName = ''): BrandSettings {
-  const slug = venueName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'mi-restaurante'
+export function makeDefaultBrand(): BrandSettings {
   return {
     logoDataUrl: null,
     bannerDataUrl: null,
-    displayName: venueName || 'Mi Restaurante',
-    city: '',
-    slogan: '',
-    description: '',
     primaryColor: '#005759',
     accentColor: '#07a7a9',
     headingFont: 'playfair',
     bodyFont: 'inter',
     borderRadius: 'soft',
-    slug,
     instagram: '',
     facebook: '',
     website: '',

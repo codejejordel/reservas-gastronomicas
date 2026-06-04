@@ -13,7 +13,7 @@ type DraftVenue = Omit<Venue, 'id'>
 const emptyDraft = (): DraftVenue => ({ name: '', address: '', phone: '' })
 
 export function Step1Venues() {
-  const { venues, addVenue, updateVenue, removeVenue, nextStep } = useSetupWizard()
+  const { venues, addVenue, updateVenue, removeVenue, nextStep, prevStep } = useSetupWizard()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [draft, setDraft] = useState<DraftVenue>(emptyDraft())
 
@@ -107,13 +107,19 @@ export function Step1Venues() {
         )}
       </AnimatePresence>
 
-      <motion.button type="button"
-        onClick={nextStep}
-        whileHover={{ opacity: 0.9, y: -1 }} whileTap={{ scale: 0.98 }}
-        className="w-full py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px hover:shadow-lg transition-all active:scale-[0.98]"
-      >
-        Continuar →
-      </motion.button>
+      <div className="flex gap-3">
+        <button type="button" onClick={prevStep}
+          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98]">
+          ← Atrás
+        </button>
+        <motion.button type="button"
+          onClick={nextStep}
+          whileHover={{ opacity: 0.9, y: -1 }} whileTap={{ scale: 0.98 }}
+          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px hover:shadow-lg transition-all active:scale-[0.98]"
+        >
+          Continuar →
+        </motion.button>
+      </div>
     </FadeUp>
   )
 }

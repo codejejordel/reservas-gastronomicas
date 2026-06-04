@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Building2, Clock, LayoutGrid, Palette, AlertTriangle, Loader2 } from 'lucide-react'
+import { Building2, Clock, LayoutGrid, Palette, AlertTriangle, Loader2, UtensilsCrossed } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
 import { SummaryCard } from './SummaryCard'
 import {
@@ -7,6 +7,7 @@ import {
   summarizeSchedule,
   summarizeTables,
   summarizeBrand,
+  summarizeRestaurant,
   isSetupComplete,
 } from './summaryHelpers'
 
@@ -16,13 +17,14 @@ interface ReviewViewProps {
 }
 
 export function ReviewView({ submitting, onSubmit }: ReviewViewProps) {
-  const { venues, schedule, tables, brand, goToStep } = useSetupWizard()
+  const { restaurant, venues, schedule, tables, brand, goToStep } = useSetupWizard()
 
+  const restaurantSummary = summarizeRestaurant(restaurant)
   const venuesSummary = summarizeVenues(venues)
   const scheduleSummary = summarizeSchedule(schedule)
   const tablesSummary = summarizeTables(tables)
   const brandSummary = summarizeBrand(brand)
-  const { ok, warnings } = isSetupComplete(venues, brand)
+  const { ok, warnings } = isSetupComplete(restaurant, venues)
 
   return (
     <div className="flex flex-col gap-5">
@@ -48,6 +50,17 @@ export function ReviewView({ submitting, onSubmit }: ReviewViewProps) {
 
       {/* Summary cards */}
       <div className="flex flex-col gap-3">
+
+        {/* Restaurant */}
+        <SummaryCard title="Restaurante" icon={<UtensilsCrossed size={15} />} onEdit={() => goToStep(0)}>
+          <div className="flex flex-col gap-0.5">
+            <strong className="text-on-surface">{restaurantSummary.nombrePublico}</strong>
+            {restaurantSummary.cuit && <span className="text-xs">CUIT: {restaurantSummary.cuit}</span>}
+            {restaurantSummary.tipoCocina && <span className="text-xs">{restaurantSummary.tipoCocina}</span>}
+            {restaurantSummary.ciudadPrincipal && <span className="text-xs">{restaurantSummary.ciudadPrincipal}</span>}
+            {restaurantSummary.emailComercial && <span className="text-xs">{restaurantSummary.emailComercial}</span>}
+          </div>
+        </SummaryCard>
 
         {/* Venues */}
         <SummaryCard title="Locales" icon={<Building2 size={15} />} onEdit={() => goToStep(1)}>
@@ -99,18 +112,15 @@ export function ReviewView({ submitting, onSubmit }: ReviewViewProps) {
         {/* Brand */}
         <SummaryCard title="Personalización" icon={<Palette size={15} />} onEdit={() => goToStep(4)}>
           <div className="flex items-start gap-3">
-            {/* Color dot + name */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <span
                   className="w-4 h-4 rounded-full shrink-0 border border-outline-variant"
                   style={{ background: brandSummary.primaryColor }}
                 />
-                <strong className="text-on-surface">{brandSummary.displayName}</strong>
               </div>
-              {brandSummary.city && <span className="text-xs">{brandSummary.city}</span>}
               <span className="text-xs">Fuente: {brandSummary.headingFont}</span>
-              <span className="text-xs font-mono text-primary">tuapp.com/r/{brandSummary.slug || '—'}</span>
+              <span className="text-xs font-mono text-primary">tuapp.com/r/{restaurant.slug || '—'}</span>
             </div>
           </div>
           <div className="flex gap-3 mt-2 text-xs">

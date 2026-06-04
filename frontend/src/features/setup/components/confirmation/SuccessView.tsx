@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { motion } from 'motion/react'
 import { Copy, Check, ExternalLink, LayoutDashboard, Share2 } from 'lucide-react'
 import { AnimatedCheck } from './AnimatedCheck'
-import type { BrandSettings } from '@/features/setup/state/setupTypes'
+import type { BrandSettings, RestaurantData } from '@/features/setup/state/setupTypes'
 import { getFontCss } from '../branding/brandingUtils'
 
 interface SuccessViewProps {
   brand: BrandSettings
+  restaurant: RestaurantData
 }
 
 const NEXT_STEPS = [
@@ -15,9 +16,9 @@ const NEXT_STEPS = [
   { icon: <ExternalLink size={14} />, text: 'Hacé una reserva de prueba en tu agenda' },
 ]
 
-export function SuccessView({ brand }: SuccessViewProps) {
+export function SuccessView({ brand, restaurant }: SuccessViewProps) {
   const [copied, setCopied] = useState(false)
-  const agendaUrl = `tuapp.com/r/${brand.slug || 'mi-agenda'}`
+  const agendaUrl = `tuapp.com/r/${restaurant.slug || 'mi-agenda'}`
   const headingFont = getFontCss(brand.headingFont)
 
   const handleCopy = () => {

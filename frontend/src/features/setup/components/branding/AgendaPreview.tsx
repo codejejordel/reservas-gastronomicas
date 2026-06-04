@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Bell, HelpCircle, Sun, Moon, Clock, Calendar, Users, Monitor, Smartphone, Maximize2, X } from 'lucide-react'
-import type { BrandSettings } from '@/features/setup/state/setupTypes'
+import type { BrandSettings, RestaurantData } from '@/features/setup/state/setupTypes'
 import { getFontCss, getBorderRadius } from './brandingUtils'
 
 interface AgendaPreviewProps {
   brand: BrandSettings
+  restaurant: RestaurantData
   onExpand?: () => void
   onClose?: () => void
   expanded?: boolean
@@ -58,7 +59,7 @@ function TimeSlot({ time, selected, disabled, primary, radius }: {
   )
 }
 
-function DesktopPreview({ brand }: { brand: BrandSettings }) {
+function DesktopPreview({ brand, restaurant }: { brand: BrandSettings; restaurant: RestaurantData }) {
   const headingFont = getFontCss(brand.headingFont)
   const bodyFont = getFontCss(brand.bodyFont)
   const radius = getBorderRadius(brand.borderRadius)
@@ -89,7 +90,7 @@ function DesktopPreview({ brand }: { brand: BrandSettings }) {
 
         {/* Banner */}
         <div style={{ background: `${primary}18`, borderLeft: `3px solid ${primary}`, padding: '0.4rem 0.75rem', borderRadius: 4, fontSize: '0.65rem', fontWeight: 700, color: primary, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-          ⇥ Estás reservando en: {brand.displayName || 'Tu Restaurante'}
+          ⇥ Estás reservando en: {restaurant.nombrePublico || 'Tu Restaurante'}
         </div>
 
         {/* Title */}
@@ -98,7 +99,7 @@ function DesktopPreview({ brand }: { brand: BrandSettings }) {
             Selecciona tu horario
           </h2>
           <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.4rem' }}>
-            Elige el turno que mejor se adapte a tu visita en {brand.displayName || 'Tu Restaurante'}.
+            Elige el turno que mejor se adapte a tu visita en {restaurant.nombrePublico || 'Tu Restaurante'}.
           </p>
         </div>
 
@@ -130,8 +131,8 @@ function DesktopPreview({ brand }: { brand: BrandSettings }) {
             : null
           }
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0.5rem 0.75rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.6))' }}>
-            <p style={{ color: 'white', fontWeight: 700, fontSize: '0.8rem', margin: 0, fontFamily: headingFont }}>{brand.displayName || 'Tu Restaurante'}</p>
-            {brand.city && <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.65rem', margin: 0 }}>{brand.city}</p>}
+            <p style={{ color: 'white', fontWeight: 700, fontSize: '0.8rem', margin: 0, fontFamily: headingFont }}>{restaurant.nombrePublico || 'Tu Restaurante'}</p>
+            {restaurant.ciudadPrincipal && <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.65rem', margin: 0 }}>{restaurant.ciudadPrincipal}</p>}
           </div>
         </div>
 
@@ -160,7 +161,7 @@ function DesktopPreview({ brand }: { brand: BrandSettings }) {
   )
 }
 
-function MobilePreview({ brand }: { brand: BrandSettings }) {
+function MobilePreview({ brand, restaurant }: { brand: BrandSettings; restaurant: RestaurantData }) {
   const headingFont = getFontCss(brand.headingFont)
   const bodyFont = getFontCss(brand.bodyFont)
   const radius = getBorderRadius(brand.borderRadius)
@@ -183,7 +184,7 @@ function MobilePreview({ brand }: { brand: BrandSettings }) {
       {/* Top bar */}
       <div style={{ background: 'white', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
         <span style={{ fontFamily: getFontCss('sora'), fontWeight: 700, fontSize: '0.9rem', color: primary }}>
-          {brand.displayName ? brand.displayName.split(' ')[0] : 'Turnify'}
+          {restaurant.nombrePublico ? restaurant.nombrePublico.split(' ')[0] : 'Turnify'}
         </span>
         <div style={{ display: 'flex', gap: '0.6rem', color: '#888' }}>
           <Bell size={14} />
@@ -218,7 +219,7 @@ function MobilePreview({ brand }: { brand: BrandSettings }) {
         <div style={{ padding: '0.875rem' }}>
           {/* Banner */}
           <div style={{ background: `${primary}18`, borderLeft: `2px solid ${primary}`, padding: '0.3rem 0.5rem', borderRadius: 4, fontSize: '0.55rem', fontWeight: 700, color: primary, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-            ⇥ Estás reservando en: {brand.displayName || 'Tu Restaurante'}
+            ⇥ Estás reservando en: {restaurant.nombrePublico || 'Tu Restaurante'}
           </div>
 
           {/* Title */}
@@ -226,7 +227,7 @@ function MobilePreview({ brand }: { brand: BrandSettings }) {
             Selecciona tu horario
           </h2>
           <p style={{ fontSize: '0.65rem', color: '#666', marginBottom: '0.875rem' }}>
-            Elige el turno que mejor se adapte a tu visita en {brand.displayName || 'Tu Restaurante'}.
+            Elige el turno que mejor se adapte a tu visita en {restaurant.nombrePublico || 'Tu Restaurante'}.
           </p>
 
           {/* Shifts */}
@@ -258,7 +259,7 @@ const DESKTOP_HEIGHT = 520
 const MOBILE_FRAME_WIDTH = 280
 const MOBILE_FRAME_HEIGHT = 560
 
-export function AgendaPreview({ brand, onExpand, onClose, expanded = false }: AgendaPreviewProps) {
+export function AgendaPreview({ brand, restaurant, onExpand, onClose, expanded = false }: AgendaPreviewProps) {
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop')
 
   return (
@@ -341,7 +342,7 @@ export function AgendaPreview({ brand, onExpand, onClose, expanded = false }: Ag
                   el.style.transform = `scale(${scale})`
                 }}
               >
-                <DesktopPreview brand={brand} />
+                <DesktopPreview brand={brand} restaurant={restaurant} />
               </div>
             </div>
           </div>
@@ -367,7 +368,7 @@ export function AgendaPreview({ brand, onExpand, onClose, expanded = false }: Ag
               el.style.marginBottom = `${(MOBILE_FRAME_HEIGHT * scale) - MOBILE_FRAME_HEIGHT}px`
             }}
           >
-            <MobilePreview brand={brand} />
+            <MobilePreview brand={brand} restaurant={restaurant} />
           </div>
         )}
       </div>

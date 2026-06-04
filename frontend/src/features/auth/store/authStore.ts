@@ -1,14 +1,19 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User } from '@supabase/supabase-js'
+import type { RolUsuario } from '@/features/auth/types'
+
+export interface AuthUser {
+  id: number
+  email: string
+  nombreCompleto: string
+  rol: RolUsuario
+}
 
 interface AuthState {
   token: string | null
-  user: User | null
-  isLoading: boolean
-  setSession: (token: string, user: User) => void
-  clearAuth: () => void
-  setLoading: (loading: boolean) => void
+  user: AuthUser | null
+  setAuth: (token: string, user: AuthUser) => void
+  logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -16,14 +21,11 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
-      isLoading: true,
-      setSession: (token, user) => set({ token, user }),
-      clearAuth: () => set({ token: null, user: null }),
-      setLoading: (loading) => set({ isLoading: loading }),
+      setAuth: (token, user) => set({ token, user }),
+      logout: () => set({ token: null, user: null }),
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ token: state.token }),
     }
   )
 )

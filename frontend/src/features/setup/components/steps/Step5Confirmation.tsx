@@ -7,7 +7,7 @@ import { SuccessView } from '../confirmation/SuccessView'
 type View = 'review' | 'success'
 
 export function Step5Confirmation() {
-  const { brand } = useSetupWizard()
+  const { brand, restaurant } = useSetupWizard()
   const [view, setView] = useState<View>('review')
   const [submitting, setSubmitting] = useState(false)
 
@@ -38,7 +38,7 @@ export function Step5Confirmation() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.32, 0, 0.24, 1] }}
         >
-          <SuccessView brand={brand} />
+          <SuccessView brand={brand} restaurant={restaurant} />
         </motion.div>
       )}
     </AnimatePresence>

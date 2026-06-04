@@ -44,14 +44,14 @@ services:
     container_name: reservas-backend
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-reservas}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-reservas_user}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-reservas_pass_dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:6543/postgres?sslmode=require
+      SPRING_DATASOURCE_USERNAME: postgres.akzpawuhiqavbubdvoeb
+      SPRING_DATASOURCE_PASSWORD: ${SUPABASE_DB_PASSWORD:-nZwJy3JRLbIeLPcx}
+      SPRING_FLYWAY_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require
+      SPRING_FLYWAY_USER: postgres.akzpawuhiqavbubdvoeb
+      SPRING_FLYWAY_PASSWORD: ${SUPABASE_DB_PASSWORD:-nZwJy3JRLbIeLPcx}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - reservas-net
 

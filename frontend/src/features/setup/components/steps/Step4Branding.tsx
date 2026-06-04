@@ -8,15 +8,12 @@ import { AgendaPreview } from '../branding/AgendaPreview'
 
 function validate(brand: ReturnType<typeof useSetupWizard>['brand']): Record<string, string> {
   const errors: Record<string, string> = {}
-  if (!brand.displayName.trim()) errors.displayName = 'El nombre público es obligatorio'
-  if (!brand.slug.trim()) errors.slug = 'La URL pública es obligatoria'
-  if (!/^[a-z0-9-]+$/.test(brand.slug)) errors.slug = 'Solo letras minúsculas, números y guiones'
   if (!/^#[0-9a-fA-F]{6}$/.test(brand.primaryColor)) errors.primaryColor = 'Color inválido'
   return errors
 }
 
 export function Step4Branding() {
-  const { brand, setBrandField, prevStep, nextStep, setStep4Expanded } = useSetupWizard()
+  const { brand, restaurant, setBrandField, prevStep, nextStep, setStep4Expanded } = useSetupWizard()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const [desktopExpanded, setDesktopExpanded] = useState(false)
@@ -90,7 +87,7 @@ export function Step4Branding() {
             {/* Mobile preview (collapsible) */}
             {mobilePreviewOpen && (
               <div className="lg:hidden mb-5 bg-surface-container rounded-2xl p-3 overflow-hidden">
-                <AgendaPreview brand={brand} />
+                <AgendaPreview brand={brand} restaurant={restaurant} />
               </div>
             )}
 
@@ -147,6 +144,7 @@ export function Step4Branding() {
             <div className="flex-1 bg-surface-container rounded-2xl p-4 overflow-hidden flex flex-col">
               <AgendaPreview
                 brand={brand}
+                restaurant={restaurant}
                 expanded
                 onClose={closePreview}
               />

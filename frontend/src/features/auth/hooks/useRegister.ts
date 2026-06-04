@@ -1,14 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import type { RegisterFormData } from '@/features/auth/schemas/registerSchema'
-
-async function registerMock(data: RegisterFormData): Promise<{ userId: string }> {
-  await new Promise((r) => setTimeout(r, 1400))
-  if (data.email === 'error@test.com') throw new Error('Este email ya está registrado')
-  return { userId: 'mock-user-456' }
-}
+import { registerRequest } from '@/features/auth/services/authService'
 
 export function useRegister() {
+  const navigate = useNavigate()
+
   return useMutation({
-    mutationFn: registerMock,
+    mutationFn: (data: RegisterFormData) => registerRequest(data),
+    onSuccess: () => {
+      navigate({ to: '/setup' })
+    },
   })
 }

@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import type { Venue, ScheduleState, WeekSchedule, DayKey, TimeRange, TablesState, Table, BrandSettings } from './setupTypes'
-import { makeDefaultWeekSchedule, makeDefaultTables, makeDefaultBrand } from './setupTypes'
+import type { Venue, ScheduleState, WeekSchedule, DayKey, TimeRange, TablesState, Table, BrandSettings, RestaurantData } from './setupTypes'
+import { makeDefaultWeekSchedule, makeDefaultTables, makeDefaultBrand, makeDefaultRestaurant, slugify } from './setupTypes'
 
 interface SetupWizardState {
   currentStep: number
+  restaurant: RestaurantData
   venues: Venue[]
   schedule: ScheduleState
   tables: TablesState
@@ -34,6 +35,8 @@ interface SetupWizardActions {
   removeTable: (scope: 'global' | number, id: number) => void
   enableTablesOverride: (venueId: number) => void
   disableTablesOverride: (venueId: number) => void
+  // Restaurant
+  setRestaurantField: <K extends keyof RestaurantData>(field: K, value: RestaurantData[K]) => void
   // Brand
   setBrandField: <K extends keyof BrandSettings>(field: K, value: BrandSettings[K]) => void
   // UI
@@ -68,7 +71,8 @@ function patchTables(state: TablesState, scope: 'global' | number, list: Table[]
 }
 
 export function SetupWizardProvider({ children }: { children: ReactNode }) {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [restaurant, setRestaurant] = useState<RestaurantData>(() => makeDefaultRestaurant())
   const [venues, setVenues] = useState<Venue[]>([])
   const [schedule, setSchedule_] = useState<ScheduleState>({
     global: makeDefaultWeekSchedule(),
@@ -94,7 +98,7 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
   const actions: SetupWizardActions = {
     goToStep: (step) => { setCurrentStep(step); setStep4Expanded_(false) },
     nextStep: () => { setCurrentStep(s => s + 1); setStep4Expanded_(false) },
-    prevStep: () => { setCurrentStep(s => Math.max(1, s - 1)); setStep4Expanded_(false) },
+    prevStep: () => { setCurrentStep(s => Math.max(0, s - 1)); setStep4Expanded_(false) },
 
     addVenue: (v) => {
       const id = _nextVenueId++
@@ -205,6 +209,16 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
       })
     },
 
+    setRestaurantField: (field, value) => {
+      setRestaurant(r => {
+        const updated = { ...r, [field]: value }
+        if (field === 'nombrePublico') {
+          updated.slug = slugify(value as string)
+        }
+        return updated
+      })
+    },
+
     setBrandField: (field, value) => {
       setBrand(b => ({ ...b, [field]: value }))
     },
@@ -214,7 +228,7 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SetupWizardContext.Provider value={{ currentStep, venues, schedule, tables, brand, ...actions }}>
+    <SetupWizardContext.Provider value={{ currentStep, restaurant, venues, schedule, tables, brand, ...actions }}>
       {children}
     </SetupWizardContext.Provider>
   )

@@ -10,6 +10,7 @@ import { InputWithIcon } from '@/shared/ui/InputWithIcon'
 import { PasswordStrength } from './PasswordStrength'
 import { SuccessState } from './SuccessState'
 import { BackToLoginButton } from './BackToLoginButton'
+import { Alert } from '@/shared/ui/Alert'
 import { FadeUp } from '../animations/FadeUp'
 
 interface RegisterFormProps {
@@ -19,7 +20,7 @@ interface RegisterFormProps {
 export function RegisterForm({ onGoToLogin }: RegisterFormProps) {
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const { mutate, isPending, isSuccess } = useRegister()
+  const { mutate, isPending, isSuccess, isError, error } = useRegister()
   const navigate = useNavigate()
   const handleComplete = useCallback(() => navigate({ to: '/setup' }), [navigate])
 
@@ -198,6 +199,21 @@ export function RegisterForm({ onGoToLogin }: RegisterFormProps) {
             )}
           </AnimatePresence>
         </FadeUp>
+
+        <AnimatePresence>
+          {isError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-4"
+            >
+              <Alert variant="error">
+                {error instanceof Error ? error.message : 'Error al crear la cuenta'}
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <FadeUp delay={0.60}>
           <button

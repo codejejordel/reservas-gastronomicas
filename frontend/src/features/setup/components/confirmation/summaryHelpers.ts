@@ -1,4 +1,4 @@
-import type { Venue, ScheduleState, TablesState, BrandSettings, DayKey } from '@/features/setup/state/setupTypes'
+import type { Venue, ScheduleState, TablesState, BrandSettings, RestaurantData, DayKey } from '@/features/setup/state/setupTypes'
 import { DAY_KEYS } from '@/features/setup/state/setupTypes'
 
 const DAY_LABELS: Record<DayKey, string> = {
@@ -44,9 +44,6 @@ export function summarizeTables(tables: TablesState): { global: number; totalCap
 }
 
 export function summarizeBrand(brand: BrandSettings): {
-  displayName: string
-  city: string
-  slug: string
   primaryColor: string
   headingFont: string
   hasLogo: boolean
@@ -56,9 +53,6 @@ export function summarizeBrand(brand: BrandSettings): {
     playfair: 'Playfair', sora: 'Sora', inter: 'Inter', 'dm-sans': 'DM Sans',
   }
   return {
-    displayName: brand.displayName || 'Sin nombre',
-    city: brand.city,
-    slug: brand.slug,
     primaryColor: brand.primaryColor,
     headingFont: fontLabels[brand.headingFont] ?? brand.headingFont,
     hasLogo: !!brand.logoDataUrl,
@@ -66,13 +60,29 @@ export function summarizeBrand(brand: BrandSettings): {
   }
 }
 
+export function summarizeRestaurant(restaurant: RestaurantData): {
+  nombrePublico: string
+  cuit: string
+  tipoCocina: string
+  ciudadPrincipal: string
+  emailComercial: string
+} {
+  return {
+    nombrePublico: restaurant.nombrePublico || 'Sin nombre',
+    cuit: restaurant.cuit,
+    tipoCocina: restaurant.tipoCocina,
+    ciudadPrincipal: restaurant.ciudadPrincipal,
+    emailComercial: restaurant.emailComercial,
+  }
+}
+
 export function isSetupComplete(
+  restaurant: RestaurantData,
   venues: Venue[],
-  brand: BrandSettings,
 ): { ok: boolean; warnings: string[] } {
   const warnings: string[] = []
+  if (!restaurant.nombrePublico.trim()) warnings.push('El nombre del restaurante está vacío.')
+  if (!restaurant.slug.trim()) warnings.push('La URL pública del restaurante está vacía.')
   if (venues.length === 0) warnings.push('No tenés ningún local configurado.')
-  if (!brand.displayName.trim()) warnings.push('El nombre público de tu agenda está vacío.')
-  if (!brand.slug.trim()) warnings.push('La URL pública de tu agenda está vacía.')
   return { ok: warnings.length === 0, warnings }
 }

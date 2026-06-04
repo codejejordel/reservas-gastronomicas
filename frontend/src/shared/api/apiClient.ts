@@ -44,13 +44,13 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     })
     data = await response.json().catch(() => null)
   } catch {
-    throw createApiError(0, 'Error al iniciar sesión')
+    throw createApiError(0, 'Error de conexión. Intentá de nuevo.')
   }
 
   if (!response.ok) {
     const message = data && typeof data === 'object' && 'message' in data 
       ? (data.message as string)
-      : 'Error al iniciar sesión'
+      : 'Error en la solicitud'
     throw createApiError(response.status, message)
   }
 

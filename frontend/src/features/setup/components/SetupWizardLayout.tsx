@@ -2,6 +2,7 @@ import type React from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { SetupWizardProvider, useSetupWizard } from '@/features/setup/state/SetupWizardContext'
 import { HeroBackground } from '@/features/auth/components/hero/HeroBackground'
+import { Step0Restaurant } from './steps/Step0Restaurant'
 import { Step1Venues } from './steps/Step1Venues'
 import { Step2Schedule } from './steps/Step2Schedule'
 import { Step3Tables } from './steps/Step3Tables'
@@ -9,6 +10,7 @@ import { Step4Branding } from './steps/Step4Branding'
 import { Step5Confirmation } from './steps/Step5Confirmation'
 
 const STEPS = [
+  { n: 0, label: 'Restaurante' },
   { n: 1, label: 'Tus locales' },
   { n: 2, label: 'Horarios' },
   { n: 3, label: 'Mesas' },
@@ -17,6 +19,7 @@ const STEPS = [
 ]
 
 const STEP_COMPONENTS: Record<number, React.ComponentType> = {
+  0: Step0Restaurant,
   1: Step1Venues,
   2: Step2Schedule,
   3: Step3Tables,

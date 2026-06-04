@@ -1,15 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { type ReactNode, useState } from 'react'
-import { useAuthListener } from '@/features/auth/hooks/useAuthListener'
 
 interface ProvidersProps {
   children: ReactNode
-}
-
-function AuthProvider({ children }: { children: ReactNode }) {
-  useAuthListener()
-  return children
 }
 
 export function Providers({ children }: ProvidersProps) {
@@ -27,9 +21,7 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {children}
-      </AuthProvider>
+      {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   )
