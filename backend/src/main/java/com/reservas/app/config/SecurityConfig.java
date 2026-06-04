@@ -44,6 +44,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/reserva/codigo/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/reserva/*/cancelar").permitAll()
 
+                        // Webhook MercadoPago
+                        .requestMatchers(HttpMethod.POST, "/pagos/webhook/**").permitAll()
+
                         //Sucursal
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/horario/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/bloqueo/vigentes").permitAll()

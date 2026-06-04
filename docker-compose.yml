@@ -55,18 +55,19 @@ services:
     networks:
       - reservas-net
 
+  # descomentar cuando se inicialice React
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: reservas-frontend
-    restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT:-3000}:80"
-    depends_on:
-      - backend
-    networks:
-      - reservas-net
+     build:
+       context: ./frontend
+       dockerfile: Dockerfile
+     container_name: reservas-frontend
+     restart: unless-stopped
+     ports:
+       - "${FRONTEND_PORT:-3000}:80"
+     depends_on:
+       - backend
+     networks:
+       - reservas-net
 
 volumes:
   postgres-data:

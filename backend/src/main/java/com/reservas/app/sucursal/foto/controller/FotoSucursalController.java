@@ -1,6 +1,5 @@
 package com.reservas.app.sucursal.foto.controller;
 
-import com.reservas.app.sucursal.foto.dto.CreateFotoSucursalRequestDto;
 import com.reservas.app.sucursal.foto.dto.FotoSucursalResponseDto;
 import com.reservas.app.sucursal.foto.dto.UpdateFotoSucursalRequestDto;
 import com.reservas.app.sucursal.foto.service.FotoSucursalService;
@@ -9,8 +8,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,12 +24,16 @@ public class FotoSucursalController {
 
     private final FotoSucursalService fotoService;
 
-    @PostMapping
-    @Operation(summary = "Agregar una foto a una sucursal")
+    @PreAuthorize("hasAnyRole('ADMIN_RESTAURANTE','SUPER_ADMIN')")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Subir una foto a una sucursal. Jorgito (Diría Agustin), Este subir imagen es para cuando quieras armar una galería de la sucursal, asi la gente ve dónde va a sacar una reserva.")
     public ResponseEntity<FotoSucursalResponseDto> create(
             @PathVariable Long sucursalId,
-            @Valid @RequestBody CreateFotoSucursalRequestDto request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(fotoService.create(sucursalId, request));
+            @RequestPart("archivo") MultipartFile archivo,
+            @RequestParam(required = false) String descripcion,
+            @RequestParam(required = false) Integer orden) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(fotoService.create(sucursalId, archivo, descripcion, orden));
     }
 
     @GetMapping

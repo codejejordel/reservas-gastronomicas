@@ -39,9 +39,9 @@ public class PagoController {
         return ResponseEntity.ok(pagoService.aprobar(reservaId));
     }
 
-    @PatchMapping("/reembolsar")
-    @Operation(summary = "Reembolsar pago (APROBADO → REEMBOLSADO)")
-    public ResponseEntity<PagoResponseDto> reembolsar(@PathVariable Long reservaId) {
-        return ResponseEntity.ok(pagoService.reembolsar(reservaId));
-    }
+//    @PatchMapping("/reembolsar")
+//    @Operation(summary = "Reembolsar pago (APROBADO → REEMBOLSADO)")
+//    public ResponseEntity<PagoResponseDto> reembolsar(@PathVariable Long reservaId) {
+//        return ResponseEntity.ok(pagoService.reembolsar(reservaId));
+//    }
 }

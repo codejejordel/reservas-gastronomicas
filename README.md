@@ -5,7 +5,7 @@ Sistema SaaS de reservas para restaurantes con pago de seña vía Mercado Pago.
 ## Stack
 
 - **Backend**: Java 17, Spring Boot 3.3, Maven, PostgreSQL 16, Flyway
-- **Frontend**: (pendiente — React)
+- **Frontend**: (React)
 - **Pagos**: Mercado Pago
 - **Infra local**: Docker Compose
 
@@ -14,7 +14,7 @@ Sistema SaaS de reservas para restaurantes con pago de seña vía Mercado Pago.
 ```
 reservas-gastronomicas/
 ├── backend/          # API REST en Spring Boot
-├── frontend/         # SPA (pendiente)
+├── frontend/         # SPA (REACT)
 ├── docs/             # UML, mockups, especificaciones
 ├── docker-compose.yml
 └── README.md
