@@ -19,7 +19,7 @@ public class WebhookPagoController {
     private final PagoService pagoService;
 
     @PostMapping("/{reservaId}")
-    @Operation(summary = "Recibe notificaciones de MercadoPago (no Se lo llama manualmente)")
+    @Operation(summary = "Recibe notificaciones de MercadoPago (este endpoint no Se lo llama manualmente)")
     public ResponseEntity<Void> handle(
             @PathVariable Long reservaId,
             @RequestBody WebhookNotificacionDto payload,
