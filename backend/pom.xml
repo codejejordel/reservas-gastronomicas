@@ -98,12 +98,13 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- ===== MapStruct (DTO <-> Entity) ===== -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>1.6.3</version>
-        </dependency>
+        <!-- ===== MapStruct (DTO <-> Entity)
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>1.6.3</version>
+            </dependency>
+        ===== -->
 
         <!-- ===== OpenAPI / Swagger UI ===== -->
         <dependency>

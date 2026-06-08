@@ -1,6 +1,7 @@
 package com.reservas.app.restaurante.service;
 
 import com.reservas.app.restaurante.dto.CreateRestauranteRequestDto;
+import com.reservas.app.restaurante.dto.DisponibilidadResponseDto;
 import com.reservas.app.restaurante.dto.RestauranteResponseDto;
 import com.reservas.app.restaurante.dto.UpdateRestauranteRequestDto;
 import com.reservas.app.restaurante.entity.Restaurante;
@@ -104,6 +105,24 @@ public class RestauranteService {
         return toDto(restauranteRepository.save(restaurante));
     }
 
+    public DisponibilidadResponseDto checkNombrePublico(String valor, Long idRestaurante) {
+        boolean existe = idRestaurante != null ? restauranteRepository.existsByNombrePublicoAndIdNot(valor, idRestaurante)
+                                                : restauranteRepository.existsByNombrePublico(valor);
+        return new DisponibilidadResponseDto(!existe);
+    }
+
+    public DisponibilidadResponseDto checkSlug(String valor, Long idRestaurante) {
+        boolean existe = idRestaurante != null ? restauranteRepository.existsBySlugPublicoAndIdNot(valor, idRestaurante)
+                                                : restauranteRepository.existsBySlugPublico(valor);
+        return new DisponibilidadResponseDto(!existe);
+    }
+
+    public DisponibilidadResponseDto checkCuit(String valor, Long idRestaurante) {
+        boolean existe = idRestaurante != null ? restauranteRepository.existsByCuitAndIdNot(valor, idRestaurante)
+                                                : restauranteRepository.existsByCuit(valor);
+        return new DisponibilidadResponseDto(!existe);
+    }
+
     public void delete(Long id) {
         Restaurante restaurante = findOrThrow(id);
         restaurante.setActivo(false);
@@ -112,7 +131,8 @@ public class RestauranteService {
 
     private Restaurante findOrThrow(Long id) {
         return restauranteRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurante no encontrado"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurante no encontrado"));
     }
 
     private RestauranteResponseDto toDto(Restaurante r) {

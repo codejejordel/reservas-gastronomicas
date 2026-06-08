@@ -9,6 +9,13 @@ import java.util.Optional;
 public interface RestauranteRepository extends JpaRepository<Restaurante, Long> {
 
     boolean existsBySlugPublico(String slugPublico);
+    boolean existsBySlugPublicoAndIdNot(String slugPublico, Long id);
+
+    boolean existsByNombrePublico(String nombrePublico);
+    boolean existsByNombrePublicoAndIdNot(String nombrePublico, Long id);
+
+    boolean existsByCuit(String cuit);
+    boolean existsByCuitAndIdNot(String cuit, Long id);
 
     Optional<Restaurante> findBySlugPublico(String slugPublico);
 
