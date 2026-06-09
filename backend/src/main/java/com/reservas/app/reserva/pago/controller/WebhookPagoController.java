@@ -19,7 +19,7 @@ public class WebhookPagoController {
     private final PagoService pagoService;
 
     @PostMapping("/{reservaId}")
-    @Operation(summary = "Recibe notificaciones de MercadoPago (no llamar manualmente)")
+    @Operation(summary = "Recibe notificaciones de MercadoPago (este endpoint no Se lo llama manualmente)")
     public ResponseEntity<Void> handle(
             @PathVariable Long reservaId,
             @RequestBody WebhookNotificacionDto payload,
@@ -35,7 +35,7 @@ public class WebhookPagoController {
             }
         }
 
-        // Siempre responder 200 para que MP no reintente
+        // Siempre respondemos con status 200 para que MP no reintente
         return ResponseEntity.ok().build();
     }
 }

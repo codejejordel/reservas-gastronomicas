@@ -1,6 +1,7 @@
 package com.reservas.app.restaurante.controller;
 
 import com.reservas.app.restaurante.dto.CreateRestauranteRequestDto;
+import com.reservas.app.restaurante.dto.DisponibilidadResponseDto;
 import com.reservas.app.restaurante.dto.RestauranteResponseDto;
 import com.reservas.app.restaurante.dto.UpdateRestauranteRequestDto;
 import com.reservas.app.restaurante.service.RestauranteService;
@@ -52,6 +53,33 @@ public class RestauranteController {
     public ResponseEntity<RestauranteResponseDto> update(@PathVariable Long id,
                                                          @Valid @RequestBody UpdateRestauranteRequestDto request) {
         return ResponseEntity.ok(restauranteService.update(id, request));
+    }
+
+    @GetMapping("/validar/nombre")
+    @Operation(summary = "Verificar disponibilidad de nombre de la empresa",
+               description = "Retorna cuando esté disponible `disponible: true`. Pasar `idRestaurante` si es una edicion, para ignorar el propio registro.")
+    public ResponseEntity<DisponibilidadResponseDto> checkNombrePublico(
+            @RequestParam String valor,
+            @RequestParam(required = false) Long idRestaurante) {
+        return ResponseEntity.ok(restauranteService.checkNombrePublico(valor, idRestaurante));
+    }
+
+    @GetMapping("/validar/slug")
+    @Operation(summary = "Verificar disponibilidad de slug público",
+               description = "Retorna `disponible: true` si el slug no está en uso. Pasar `idRestaurante` al editar para ignorar el propio registro.")
+    public ResponseEntity<DisponibilidadResponseDto> checkSlug(
+            @RequestParam String valor,
+            @RequestParam(required = false) Long idRestaurante) {
+        return ResponseEntity.ok(restauranteService.checkSlug(valor, idRestaurante));
+    }
+
+    @GetMapping("/validar/cuit")
+    @Operation(summary = "Verificar disponibilidad de CUIT",
+               description = "Retorna `disponible: true` si el CUIT no está en uso. Pasar `excludeId` al editar para ignorar el propio registro.")
+    public ResponseEntity<DisponibilidadResponseDto> checkCuit(
+            @RequestParam String valor,
+            @RequestParam(required = false) Long excludeId) {
+        return ResponseEntity.ok(restauranteService.checkCuit(valor, excludeId));
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN','ADMIN_RESTAURANTE')")
