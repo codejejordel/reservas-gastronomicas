@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
+import { Loader2 } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
 import { DAY_KEYS } from '@/features/setup/state/setupTypes'
 import { FadeUp } from '@/features/auth/components/animations/FadeUp'
 import { DayScheduleRow } from '../schedule/DayScheduleRow'
 import { ScopeSelector, ScopeOverrideBanner } from '../shared/ScopeSelector'
+import { useSubmitStep2 } from '@/features/setup/hooks/useSubmitStep2'
 
 function validateSchedule(schedule: ReturnType<typeof useSetupWizard>['schedule']['global']): Record<string, Record<number, string>> {
   const errors: Record<string, Record<number, string>> = {}
@@ -23,7 +25,8 @@ function validateSchedule(schedule: ReturnType<typeof useSetupWizard>['schedule'
 }
 
 export function Step2Schedule() {
-  const { venues, schedule, setDayEnabled, setTimeRange, addTimeRange, removeTimeRange, copyDay, enableOverride, disableOverride, nextStep, prevStep } = useSetupWizard()
+  const { venues, schedule, setDayEnabled, setTimeRange, addTimeRange, removeTimeRange, copyDay, enableOverride, disableOverride, prevStep } = useSetupWizard()
+  const { submit, isPending, error: submitError } = useSubmitStep2()
 
   const [scope, setScope] = useState<'global' | number>('global')
   const [errors, setErrors] = useState<Record<string, Record<number, string>>>({})
@@ -34,14 +37,14 @@ export function Step2Schedule() {
 
   const hasOverride = typeof scope === 'number' && schedule.overrides[scope as number] != null
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const errs = validateSchedule(activeSchedule)
     if (Object.keys(errs).length) {
       setErrors(errs)
       return
     }
     setErrors({})
-    nextStep()
+    await submit()
   }
 
   return (
@@ -81,15 +84,21 @@ export function Step2Schedule() {
       </div>
 
       {/* Footer */}
+      {submitError && (
+        <div className="p-3 bg-error-container rounded-xl text-xs text-error font-medium mb-2">
+          {submitError.message}
+        </div>
+      )}
       <div className="flex gap-3">
-        <button type="button" onClick={prevStep}
-          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98]">
+        <button type="button" onClick={prevStep} disabled={isPending}
+          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98] disabled:opacity-50">
           ← Atrás
         </button>
         <motion.button type="button" onClick={handleContinue}
-          whileHover={{ opacity: 0.9, y: -1 }} whileTap={{ scale: 0.98 }}
-          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
-          Continuar →
+          disabled={isPending}
+          whileHover={!isPending ? { opacity: 0.9, y: -1 } : {}} whileTap={!isPending ? { scale: 0.98 } : {}}
+          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+          {isPending ? <><Loader2 size={15} className="animate-spin" /> Guardando...</> : 'Continuar →'}
         </motion.button>
       </div>
     </FadeUp>

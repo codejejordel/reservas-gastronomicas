@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
+import { clearWizardProgress } from '@/features/setup/state/setupPersistence'
 import { ReviewView } from '../confirmation/ReviewView'
 import { SuccessView } from '../confirmation/SuccessView'
 
@@ -9,14 +10,10 @@ type View = 'review' | 'success'
 export function Step5Confirmation() {
   const { brand, restaurant } = useSetupWizard()
   const [view, setView] = useState<View>('review')
-  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = () => {
-    setSubmitting(true)
-    setTimeout(() => {
-      setSubmitting(false)
-      setView('success')
-    }, 1500)
+    clearWizardProgress()
+    setView('success')
   }
 
   return (
@@ -29,7 +26,7 @@ export function Step5Confirmation() {
           exit={{ opacity: 0, x: -24 }}
           transition={{ duration: 0.28, ease: [0.32, 0, 0.24, 1] }}
         >
-          <ReviewView submitting={submitting} onSubmit={handleSubmit} />
+          <ReviewView submitting={false} onSubmit={handleSubmit} />
         </motion.div>
       ) : (
         <motion.div

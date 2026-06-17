@@ -37,8 +37,17 @@ public class Reserva {
     private Sucursal sucursal;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
+
+    @Column(name = "nombre_invitado", length = 200)
+    private String nombreInvitado;
+
+    @Column(name = "email_invitado", length = 255)
+    private String emailInvitado;
+
+    @Column(name = "telefono_invitado", length = 50)
+    private String telefonoInvitado;
 
     @Column(name = "fecha_reserva", nullable = false)
     private LocalDate fechaReserva;

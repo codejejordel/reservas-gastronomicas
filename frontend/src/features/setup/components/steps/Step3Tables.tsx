@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Plus, LayoutGrid } from 'lucide-react'
+import { Plus, LayoutGrid, Loader2 } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
+import { useSubmitStep3 } from '@/features/setup/hooks/useSubmitStep3'
 import { FadeUp } from '@/features/auth/components/animations/FadeUp'
 import { ScopeSelector, ScopeOverrideBanner } from '../shared/ScopeSelector'
 import { TableRow } from '../tables/TableRow'
@@ -12,8 +13,9 @@ export function Step3Tables() {
     venues, tables,
     addTable, addManyTables, updateTable, removeTable,
     enableTablesOverride, disableTablesOverride,
-    nextStep, prevStep,
+    prevStep,
   } = useSetupWizard()
+  const { submit, isPending, error: submitError } = useSubmitStep3()
 
   const [scope, setScope] = useState<'global' | number>('global')
   const [showBulk, setShowBulk] = useState(false)
@@ -46,8 +48,8 @@ export function Step3Tables() {
     return Object.keys(errs).length === 0
   }
 
-  const handleContinue = () => {
-    if (validate()) nextStep()
+  const handleContinue = async () => {
+    if (validate()) await submit()
   }
 
   return (
@@ -152,22 +154,29 @@ export function Step3Tables() {
       </AnimatePresence>
 
       {/* Footer */}
+      {submitError && (
+        <div className="p-3 bg-error-container rounded-xl text-xs text-error font-medium mt-4">
+          {submitError.message}
+        </div>
+      )}
       <div className="flex gap-3 mt-6">
         <button
           type="button"
           onClick={prevStep}
-          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98]"
+          disabled={isPending}
+          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98] disabled:opacity-50"
         >
           ← Atrás
         </button>
         <motion.button
           type="button"
           onClick={handleContinue}
-          whileHover={{ opacity: 0.9, y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+          disabled={isPending}
+          whileHover={!isPending ? { opacity: 0.9, y: -1 } : {}}
+          whileTap={!isPending ? { scale: 0.98 } : {}}
+          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continuar →
+          {isPending ? <><Loader2 size={15} className="animate-spin" /> Guardando...</> : 'Continuar →'}
         </motion.button>
       </div>
     </FadeUp>

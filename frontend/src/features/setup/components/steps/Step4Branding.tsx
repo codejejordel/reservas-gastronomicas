@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
 import { FadeUp } from '@/features/auth/components/animations/FadeUp'
 import { BrandingForm } from '../branding/BrandingForm'
 import { AgendaPreview } from '../branding/AgendaPreview'
+import { useSubmitStep4 } from '@/features/setup/hooks/useSubmitStep4'
 
 function validate(brand: ReturnType<typeof useSetupWizard>['brand']): Record<string, string> {
   const errors: Record<string, string> = {}
@@ -13,7 +14,8 @@ function validate(brand: ReturnType<typeof useSetupWizard>['brand']): Record<str
 }
 
 export function Step4Branding() {
-  const { brand, restaurant, setBrandField, prevStep, nextStep, setStep4Expanded } = useSetupWizard()
+  const { brand, restaurant, setBrandField, prevStep, setStep4Expanded } = useSetupWizard()
+  const { submit, isPending, error } = useSubmitStep4()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const [desktopExpanded, setDesktopExpanded] = useState(false)
@@ -40,11 +42,11 @@ export function Step4Branding() {
     return () => window.removeEventListener('keydown', onKey)
   }, [desktopExpanded, setStep4Expanded])
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     const errs = validate(brand)
     if (Object.keys(errs).length) { setErrors(errs); return }
     setErrors({})
-    nextStep()
+    await submit()
   }
 
   return (
@@ -103,11 +105,17 @@ export function Step4Branding() {
             )}
 
             {/* Footer */}
+            {error && (
+              <div className="p-3 bg-error-container rounded-xl text-xs text-error font-medium mt-2">
+                {error.message}
+              </div>
+            )}
             <div className="flex gap-3 mt-6">
               <button
                 type="button"
                 onClick={prevStep}
-                className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98]"
+                disabled={isPending}
+                className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 ← Atrás
               </button>
@@ -115,18 +123,20 @@ export function Step4Branding() {
               <button
                 type="button"
                 onClick={openPreview}
-                className="hidden lg:flex items-center justify-center gap-1.5 flex-1 py-3 border border-primary text-primary rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98]"
+                disabled={isPending}
+                className="hidden lg:flex items-center justify-center gap-1.5 flex-1 py-3 border border-primary text-primary rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 Vista previa
               </button>
               <motion.button
                 type="button"
                 onClick={handleFinish}
-                whileHover={{ opacity: 0.9, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+                disabled={isPending}
+                whileHover={!isPending ? { opacity: 0.9, y: -1 } : {}}
+                whileTap={!isPending ? { scale: 0.98 } : {}}
+                className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Finalizar configuración ✓
+                {isPending ? <><Loader2 size={15} className="animate-spin" /> Guardando...</> : 'Finalizar configuración ✓'}
               </motion.button>
             </div>
           </motion.div>

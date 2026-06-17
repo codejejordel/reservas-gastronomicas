@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
-import { Plus, Store, MapPin, Phone } from 'lucide-react'
+import { Plus, Store, MapPin, Phone, Loader2 } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
+import { useSubmitStep1 } from '@/features/setup/hooks/useSubmitStep1'
 import type { Venue } from '@/features/setup/state/setupTypes'
 import { InputWithIcon } from '@/shared/ui/InputWithIcon'
 import { FieldLabel } from '@/shared/ui/FieldLabel'
@@ -13,7 +14,8 @@ type DraftVenue = Omit<Venue, 'id'>
 const emptyDraft = (): DraftVenue => ({ name: '', address: '', phone: '' })
 
 export function Step1Venues() {
-  const { venues, addVenue, updateVenue, removeVenue, nextStep, prevStep } = useSetupWizard()
+  const { venues, addVenue, updateVenue, removeVenue, prevStep } = useSetupWizard()
+  const { submit, isPending, error } = useSubmitStep1()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [draft, setDraft] = useState<DraftVenue>(emptyDraft())
 
@@ -107,17 +109,24 @@ export function Step1Venues() {
         )}
       </AnimatePresence>
 
+      {error && (
+        <div className="p-3 bg-error-container rounded-xl text-xs text-error font-medium mb-2">
+          {error.message}
+        </div>
+      )}
+
       <div className="flex gap-3">
-        <button type="button" onClick={prevStep}
-          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98]">
+        <button type="button" onClick={prevStep} disabled={isPending}
+          className="flex-1 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98] disabled:opacity-50">
           ← Atrás
         </button>
         <motion.button type="button"
-          onClick={nextStep}
-          whileHover={{ opacity: 0.9, y: -1 }} whileTap={{ scale: 0.98 }}
-          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px hover:shadow-lg transition-all active:scale-[0.98]"
+          onClick={submit}
+          disabled={isPending}
+          whileHover={!isPending ? { opacity: 0.9, y: -1 } : {}} whileTap={!isPending ? { scale: 0.98 } : {}}
+          className="flex-2 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continuar →
+          {isPending ? <><Loader2 size={15} className="animate-spin" /> Guardando...</> : 'Continuar →'}
         </motion.button>
       </div>
     </FadeUp>

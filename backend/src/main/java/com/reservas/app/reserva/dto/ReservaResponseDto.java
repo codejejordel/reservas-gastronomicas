@@ -29,4 +29,7 @@ public class ReservaResponseDto {
     private String motivoCancelacion;
     private CanceladaPor canceladaPor;
     private LocalDateTime fechaCreacion;
+    private String nombreInvitado;
+    private String emailInvitado;
+    private String telefonoInvitado;
 }

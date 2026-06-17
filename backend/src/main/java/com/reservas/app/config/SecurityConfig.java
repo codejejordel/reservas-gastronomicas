@@ -40,12 +40,22 @@ public class SecurityConfig {
 
                         //Cliente
                         .requestMatchers(HttpMethod.POST, "/cliente").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/reserva").permitAll()
+                        
+                        // Reserva pública
+                        .requestMatchers(HttpMethod.POST, "/reserva/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/reserva/codigo/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/reserva/*/cancelar").permitAll()
 
                         // Webhook MercadoPago
                         .requestMatchers(HttpMethod.POST, "/pagos/webhook/**").permitAll()
+
+                        // Restaurante público (por slug)
+                        .requestMatchers(HttpMethod.GET, "/restaurante/slug/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/restaurante/slug/**").permitAll()
+
+                        // Sucursal pública
+                        .requestMatchers(HttpMethod.GET, "/sucursal/restaurante/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sucursal/*/disponibilidad").permitAll()
 
                         //Sucursal
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/horario/**").permitAll()
@@ -53,7 +63,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/resena").permitAll()
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/foto").permitAll()
 
-                        // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

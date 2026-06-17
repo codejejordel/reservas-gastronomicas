@@ -3,6 +3,7 @@ package com.reservas.app.reserva.service;
 import com.reservas.app.cliente.entity.Cliente;
 import com.reservas.app.cliente.repository.ClienteRepository;
 import com.reservas.app.reserva.dto.CancelarReservaRequestDto;
+import com.reservas.app.reserva.dto.CreateReservaPublicaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaRequestDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
 import com.reservas.app.reserva.entity.CanceladaPor;
@@ -10,6 +11,7 @@ import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.entity.Reserva;
 import com.reservas.app.reserva.repository.ReservaRepository;
 import com.reservas.app.reserva.spec.ReservaSpecs;
+import com.reservas.app.mesa.repository.MesaRepository;
 import com.reservas.app.sucursal.configuracion.entity.ConfiguracionSucursal;
 import com.reservas.app.sucursal.configuracion.repository.ConfiguracionSucursalRepository;
 import com.reservas.app.sucursal.entity.Sucursal;
@@ -36,6 +38,7 @@ public class ReservaService {
     private final ClienteRepository clienteRepository;
     private final SucursalRepository sucursalRepository;
     private final ConfiguracionSucursalRepository configuracionRepository;
+    private final MesaRepository mesaRepository;
 
     @Transactional
     public ReservaResponseDto create(CreateReservaRequestDto request) {
@@ -70,6 +73,61 @@ public class ReservaService {
         reserva.setCodigoReserva(generarCodigo());
         reserva.setSucursal(sucursal);
         reserva.setCliente(cliente);
+        reserva.setFechaReserva(request.getFechaReserva());
+        reserva.setHoraReserva(request.getHoraReserva());
+        reserva.setCantPersonas(request.getCantPersonas());
+        reserva.setObservaciones(request.getObservaciones());
+        reserva.setCanalNotif(request.getCanalNotif());
+        reserva.setEstado(estadoInicial);
+
+        if (estadoInicial == EstadoReserva.CONFIRMADA) {
+            reserva.setFechaConfirmacion(LocalDateTime.now());
+        }
+
+        return toDto(reservaRepository.save(reserva));
+    }
+
+    @Transactional
+    public ReservaResponseDto createPublic(CreateReservaPublicaRequestDto request) {
+        Sucursal sucursal = sucursalRepository.findById(request.getSucursalId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sucursal no encontrada"));
+
+        if (!Boolean.TRUE.equals(sucursal.getActiva())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La sucursal no está activa");
+        }
+
+        ConfiguracionSucursal config = configuracionRepository.findBySucursalId(sucursal.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "La sucursal no tiene configuración"));
+
+        // Validar rango de personas
+        if (request.getCantPersonas() < config.getMinPersonasPorReserva()
+                || request.getCantPersonas() > config.getMaxPersonasPorReserva()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    String.format("La cantidad de personas debe estar entre %d y %d",
+                            config.getMinPersonasPorReserva(), config.getMaxPersonasPorReserva()));
+        }
+
+        // Validar disponibilidad (race condition protection)
+        Integer capacidadTotal = mesaRepository.sumCapacidadBySucursalId(sucursal.getId());
+        if (capacidadTotal == null) capacidadTotal = 0;
+        Integer ocupadas = reservaRepository.sumPersonasBySucursalFechaHora(
+                sucursal.getId(), request.getFechaReserva(), request.getHoraReserva());
+        int disponible = capacidadTotal - (ocupadas != null ? ocupadas : 0);
+        if (disponible < request.getCantPersonas()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No hay disponibilidad para esa fecha y hora");
+        }
+
+        // Crear reserva con datos guest (sin crear Cliente/Usuario)
+        EstadoReserva estadoInicial = determinarEstadoInicial(config);
+
+        Reserva reserva = new Reserva();
+        reserva.setCodigoReserva(generarCodigo());
+        reserva.setSucursal(sucursal);
+        reserva.setNombreInvitado(request.getCliente().getNombre());
+        reserva.setEmailInvitado(request.getCliente().getEmail().toLowerCase().trim());
+        reserva.setTelefonoInvitado(request.getCliente().getTelefono());
         reserva.setFechaReserva(request.getFechaReserva());
         reserva.setHoraReserva(request.getHoraReserva());
         reserva.setCantPersonas(request.getCantPersonas());
@@ -203,13 +261,16 @@ public class ReservaService {
     }
 
     private ReservaResponseDto toDto(Reserva r) {
+        Long clienteId = r.getCliente() != null ? r.getCliente().getId() : null;
+        String clienteNombre = r.getCliente() != null ? r.getCliente().getNombreCompleto() : null;
         return new ReservaResponseDto(
                 r.getId(), r.getCodigoReserva(),
-                r.getSucursal().getId(), r.getCliente().getId(), r.getCliente().getNombreCompleto(),
+                r.getSucursal().getId(), clienteId, clienteNombre,
                 r.getFechaReserva(), r.getHoraReserva(), r.getCantPersonas(),
                 r.getEstado(), r.getObservaciones(), r.getCanalNotif(),
                 r.getFechaConfirmacion(), r.getFechaCancelacion(),
-                r.getMotivoCancelacion(), r.getCanceladaPor(), r.getFechaCreacion()
+                r.getMotivoCancelacion(), r.getCanceladaPor(), r.getFechaCreacion(),
+                r.getNombreInvitado(), r.getEmailInvitado(), r.getTelefonoInvitado()
         );
     }
 }

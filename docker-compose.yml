@@ -44,7 +44,7 @@ services:
     container_name: reservas-backend
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:6543/postgres?sslmode=require
+      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
       SPRING_DATASOURCE_USERNAME: postgres.akzpawuhiqavbubdvoeb
       SPRING_DATASOURCE_PASSWORD: ${SUPABASE_DB_PASSWORD:-nZwJy3JRLbIeLPcx}
       SPRING_FLYWAY_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require

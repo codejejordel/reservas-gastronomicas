@@ -19,4 +19,5 @@ export interface LoginResponse {
   email: string
   nombreCompleto: string
   rol: RolUsuario
+  onboardingCompleto: boolean
 }

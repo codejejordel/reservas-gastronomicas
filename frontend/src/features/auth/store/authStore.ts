@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string
   nombreCompleto: string
   rol: RolUsuario
+  onboardingCompleto: boolean
 }
 
 interface AuthState {

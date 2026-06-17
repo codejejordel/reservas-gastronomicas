@@ -30,7 +30,7 @@ export async function registerRequest(data: RegisterFormData): Promise<RegisterR
       password: data.password,
       telefono: data.phone,
       dni: null,
-      rol: 'CLIENTE',
+      rol: 'ADMIN_RESTAURANTE',
     }),
   })
 }

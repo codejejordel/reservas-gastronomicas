@@ -13,4 +13,5 @@ public class LoginResponseDto {
     private String email;
     private String nombreCompleto;
     private RolUsuario rol;
+    private Boolean onboardingCompleto;
 }

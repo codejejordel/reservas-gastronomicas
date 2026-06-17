@@ -1,17 +1,21 @@
 package com.reservas.app.sucursal.controller;
 
 import com.reservas.app.sucursal.dto.CreateSucursalRequestDto;
+import com.reservas.app.sucursal.dto.DisponibilidadResponseDto;
 import com.reservas.app.sucursal.dto.SucursalResponseDto;
 import com.reservas.app.sucursal.dto.UpdateSucursalRequestDto;
+import com.reservas.app.sucursal.service.DisponibilidadService;
 import com.reservas.app.sucursal.service.SucursalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -21,6 +25,7 @@ import java.util.List;
 public class SucursalController {
 
     private final SucursalService sucursalService;
+    private final DisponibilidadService disponibilidadService;
 
     @PostMapping
     @Operation(summary = "Crear una sucursal para un restaurante")
@@ -59,5 +64,15 @@ public class SucursalController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         sucursalService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/disponibilidad")
+    @Operation(summary = "Calcular disponibilidad de turnos para una sucursal")
+    public ResponseEntity<DisponibilidadResponseDto> getDisponibilidad(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(defaultValue = "2") int personas) {
+        return ResponseEntity.ok(disponibilidadService.calcularDisponibilidad(id, desde, hasta, personas));
     }
 }

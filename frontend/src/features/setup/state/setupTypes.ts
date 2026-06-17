@@ -79,7 +79,14 @@ export function makeDefaultRestaurant(): RestaurantData {
 }
 
 export function slugify(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/[\s-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 export type FontFamily = 'sora' | 'playfair' | 'inter' | 'dm-sans'
@@ -121,4 +128,43 @@ export function makeDefaultWeekSchedule(): WeekSchedule {
   return Object.fromEntries(
     DAY_KEYS.map(k => [k, makeDefaultDaySchedule()])
   ) as WeekSchedule
+}
+
+export interface PersistedIds {
+  restauranteId: number | null
+  sucursalIds: Record<number, number>
+  horariosBySucursal: Record<number, number[]>
+  mesasBySucursal: Record<number, number[]>
+}
+
+export function makeDefaultPersistedIds(): PersistedIds {
+  return {
+    restauranteId: null,
+    sucursalIds: {},
+    horariosBySucursal: {},
+    mesasBySucursal: {},
+  }
+}
+
+export const DIA_SEMANA_MAP: Record<DayKey, string> = {
+  mon: 'MONDAY',
+  tue: 'TUESDAY',
+  wed: 'WEDNESDAY',
+  thu: 'THURSDAY',
+  fri: 'FRIDAY',
+  sat: 'SATURDAY',
+  sun: 'SUNDAY',
+}
+
+export const FONT_FAMILY_MAP: Record<FontFamily, string> = {
+  sora: 'SORA',
+  playfair: 'PLAYFAIR',
+  inter: 'INTER',
+  'dm-sans': 'DM_SANS',
+}
+
+export const BORDER_STYLE_MAP: Record<BorderRadiusStyle, string> = {
+  minimal: 'MINIMAL',
+  soft: 'SUAVE',
+  rounded: 'REDONDO',
 }

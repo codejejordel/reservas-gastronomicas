@@ -68,7 +68,14 @@ public class UsuarioService {
         );
 
         return new LoginResponseDto(token, "Bearer", usuario.getId(),
-                usuario.getEmail(), usuario.getNombreCompleto(), usuario.getRol());
+                usuario.getEmail(), usuario.getNombreCompleto(), usuario.getRol(), usuario.getOnboardingCompleto());
+    }
+
+    public UsuarioResponseDto completarOnboarding(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        usuario.setOnboardingCompleto(true);
+        return toDto(usuarioRepository.save(usuario));
     }
 
     public UsuarioResponseDto createUser(RegistroRequestDto request) {

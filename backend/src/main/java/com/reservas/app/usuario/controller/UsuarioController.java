@@ -44,4 +44,10 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDto> getByDni(@PathVariable String dni) {
         return ResponseEntity.ok(usuarioService.getByDni(dni));
     }
+
+    @PatchMapping("/{id}/onboarding")
+    @Operation(summary = "Marcar onboarding como completado")
+    public ResponseEntity<UsuarioResponseDto> completarOnboarding(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.completarOnboarding(id));
+    }
 }

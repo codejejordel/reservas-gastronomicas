@@ -89,4 +89,5 @@ logging:
     root: INFO
     com.reservas: DEBUG
     org.springframework.web: INFO
+    org.springframework.security: INFO
 #    org.hibernate.SQL: DEBUG

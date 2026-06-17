@@ -1,6 +1,7 @@
 package com.reservas.app.reserva.controller;
 
 import com.reservas.app.reserva.dto.CancelarReservaRequestDto;
+import com.reservas.app.reserva.dto.CreateReservaPublicaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaRequestDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
 import com.reservas.app.reserva.entity.EstadoReserva;
@@ -82,5 +83,11 @@ public class ReservaController {
     @Operation(summary = "Marcar no-show (CONFIRMADA → NO_SHOW, incrementa contador del cliente)")
     public ResponseEntity<ReservaResponseDto> noShow(@PathVariable Long id) {
         return ResponseEntity.ok(reservaService.marcarNoShow(id));
+    }
+
+    @PostMapping("/public")
+    @Operation(summary = "Crear reserva pública (con upsert de cliente inline)")
+    public ResponseEntity<ReservaResponseDto> createPublic(@Valid @RequestBody CreateReservaPublicaRequestDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reservaService.createPublic(request));
     }
 }

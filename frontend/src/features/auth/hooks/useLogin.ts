@@ -16,8 +16,9 @@ export function useLogin() {
         email: response.email,
         nombreCompleto: response.nombreCompleto,
         rol: response.rol,
+        onboardingCompleto: response.onboardingCompleto,
       })
-      navigate({ to: '/dashboard' })
+      navigate({ to: response.onboardingCompleto ? '/dashboard' : '/setup' })
     },
   })
 }

@@ -1,14 +1,27 @@
 import { motion } from 'motion/react'
-import { Building2, FileText, Hash, ChefHat, MapPin, Quote, Mail, Link } from 'lucide-react'
+import { Building2, FileText, Hash, ChefHat, MapPin, Quote, Mail, Link, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
 import { InputWithIcon } from '@/shared/ui/InputWithIcon'
 import { FieldLabel } from '@/shared/ui/FieldLabel'
 import { FadeUp } from '@/features/auth/components/animations/FadeUp'
+import { useSubmitStep0 } from '@/features/setup/hooks/useSubmitStep0'
+import { useValidateSlug, useValidateNombre } from '@/features/setup/hooks/useValidateRestaurantUnique'
 
 export function Step0Restaurant() {
-  const { restaurant, setRestaurantField, nextStep } = useSetupWizard()
+  const { restaurant, setRestaurantField, ids } = useSetupWizard()
+  const { submit, isPending, error } = useSubmitStep0()
 
-  const canContinue = restaurant.nombrePublico.trim().length > 0
+  const slugCheck = useValidateSlug(restaurant.slug, ids.restauranteId ?? undefined)
+  const nombreCheck = useValidateNombre(restaurant.nombrePublico, ids.restauranteId ?? undefined)
+
+  const slugTaken = slugCheck.data?.disponible === false
+  const nombreTaken = nombreCheck.data?.disponible === false
+
+  const canContinue =
+    restaurant.nombrePublico.trim().length > 0 &&
+    !slugTaken &&
+    !nombreTaken &&
+    !isPending
 
   return (
     <FadeUp delay={0.1}>
@@ -34,7 +47,24 @@ export function Step0Restaurant() {
 
         {/* Slug — autogenerado, editable */}
         <div>
-          <FieldLabel>URL pública</FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel>URL pública</FieldLabel>
+            {slugCheck.isFetching && (
+              <span className="flex items-center gap-1 text-xs text-on-surface-variant">
+                <Loader2 size={11} className="animate-spin" /> Verificando...
+              </span>
+            )}
+            {!slugCheck.isFetching && slugTaken && (
+              <span className="flex items-center gap-1 text-xs text-error font-medium">
+                <XCircle size={12} /> No disponible
+              </span>
+            )}
+            {!slugCheck.isFetching && slugCheck.isSuccess && !slugTaken && restaurant.slug.length >= 3 && (
+              <span className="flex items-center gap-1 text-xs text-success font-medium">
+                <CheckCircle2 size={12} /> Disponible
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-0">
             <span className="text-xs text-on-surface-variant bg-surface-container px-3 py-[0.65rem] rounded-l-lg border border-r-0 border-outline-variant whitespace-nowrap">
               tuapp.com/r/
@@ -123,16 +153,33 @@ export function Step0Restaurant() {
         </div>
       </div>
 
+      {/* Validation feedback */}
+      {nombreTaken && (
+        <div className="flex items-center gap-2 text-xs text-error font-medium px-1">
+          <XCircle size={13} /> El nombre ya está registrado
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-3 p-3 bg-error-container rounded-xl text-xs text-error font-medium">
+          {error.message}
+        </div>
+      )}
+
       {/* Continue */}
       <motion.button
         type="button"
-        onClick={nextStep}
+        onClick={submit}
         disabled={!canContinue}
         whileHover={canContinue ? { opacity: 0.9, y: -1 } : {}}
         whileTap={canContinue ? { scale: 0.98 } : {}}
         className="w-full py-3 mt-6 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        Continuar →
+        {isPending ? (
+          <><Loader2 size={15} className="animate-spin" /> Guardando...</>
+        ) : (
+          'Continuar →'
+        )}
       </motion.button>
     </FadeUp>
   )
