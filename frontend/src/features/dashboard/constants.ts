@@ -1,0 +1,5 @@
+export const TOLERANCIA_MINUTOS = 5
+export const COBERTURA_MAX = 50
+export const POLLING_INTERVAL_MS = 20000
+export const HEARTBEAT_DURATION_MS = 600
+export const FADEOUT_DURATION_MS = 600

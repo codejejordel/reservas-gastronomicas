@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 /* ── Tailwind v4 theme tokens from DESIGN.MD ────────── */
 @theme {
   /* Colors */
@@ -15,6 +17,7 @@
   --color-surface-variant:           #dee4e3;
   --color-on-surface:                #171d1d;
   --color-on-surface-variant:        #3d4949;
+  --color-on-surface-dim:            #8b9a99;
   --color-inverse-surface:           #2c3132;
   --color-inverse-on-surface:        #ecf2f1;
   --color-outline:                   #6c7a79;
@@ -88,6 +91,72 @@
   --radius-lg:   1rem;
   --radius-xl:   1.5rem;
   --radius-full: 9999px;
+}
+
+/* ── Dark mode overrides ────────────────────────────── */
+.dark {
+  --color-surface:                   #0d0e14;
+  --color-surface-dim:               #2a2d3a;
+  --color-surface-bright:            #16171f;
+  --color-surface-container-lowest:  #0d0e14;
+  --color-surface-container-low:     #12131a;
+  --color-surface-container:         #16171f;
+  --color-surface-container-high:    #1d1f2a;
+  --color-surface-container-highest: #242633;
+  --color-surface-variant:           #2a2d3a;
+  --color-on-surface:                #e8e9f0;
+  --color-on-surface-variant:        #8b8d9e;
+  --color-on-surface-dim:            #5a5c6b;
+  --color-inverse-surface:           #f5fafa;
+  --color-inverse-on-surface:        #171d1d;
+  --color-outline:                   #3a3d4d;
+  --color-outline-variant:           #2a2d3a;
+  --color-surface-tint:              #9d7cff;
+  --color-background:                #0d0e14;
+  --color-on-background:             #e8e9f0;
+
+  --color-primary:                   #9d7cff;
+  --color-on-primary:                #ffffff;
+  --color-primary-container:         rgba(157,124,255,0.15);
+  --color-on-primary-container:      #e8e9f0;
+  --color-inverse-primary:           #00696b;
+  --color-primary-fixed:             #9d7cff;
+  --color-primary-fixed-dim:         #7b5fd4;
+  --color-on-primary-fixed:          #ffffff;
+  --color-on-primary-fixed-variant:  #b8a0ff;
+
+  --color-secondary:                 #5e8a8b;
+  --color-on-secondary:              #ffffff;
+  --color-secondary-container:       #252636;
+  --color-on-secondary-container:    #beebec;
+  --color-secondary-fixed:           #252636;
+  --color-secondary-fixed-dim:       #1e1f2e;
+  --color-on-secondary-fixed:        #e8e9f0;
+  --color-on-secondary-fixed-variant:#a3cfcf;
+
+  --color-tertiary:                  #db7e4e;
+  --color-on-tertiary:               #ffffff;
+  --color-tertiary-container:        #3d1a08;
+  --color-on-tertiary-container:     #ffdbcb;
+  --color-tertiary-fixed:            #3d1a08;
+  --color-tertiary-fixed-dim:        #2e1306;
+  --color-on-tertiary-fixed:         #ffdbcb;
+  --color-on-tertiary-fixed-variant: #ffb692;
+
+  --color-error:                     #ff6b6b;
+  --color-on-error:                  #0d0e14;
+  --color-error-container:           #3a0a0a;
+  --color-on-error-container:        #ffdad6;
+
+  --color-success:                   #4ade80;
+  --color-on-success:                #0d0e14;
+  --color-success-container:         #0a2e12;
+  --color-on-success-container:      #b8f5b9;
+
+  --color-warning:                   #fbbf24;
+  --color-on-warning:                #0d0e14;
+  --color-warning-container:         #3d2a00;
+  --color-on-warning-container:      #ffdeb8;
 }
 
 /* ── Base ───────────────────────────────────────────── */
