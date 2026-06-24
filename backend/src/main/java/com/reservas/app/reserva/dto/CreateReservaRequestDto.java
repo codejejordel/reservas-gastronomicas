@@ -14,23 +14,23 @@ import java.time.LocalTime;
 @Setter
 public class CreateReservaRequestDto {
 
-    @NotNull
+//    @NotNull
     private Long sucursalId;
 
-    @NotNull
+//    @NotNull
     private Long clienteId;
 
-    @NotNull
+//    @NotNull
     private LocalDate fechaReserva;
 
-    @NotNull
+//    @NotNull
     private LocalTime horaReserva;
 
-    @NotNull
+//    @NotNull
     @Min(1)
     private Integer cantPersonas;
 
-    @Size(max = 500)
+//    @Size(max = 500)
     private String observaciones;
 
     private CanalNotif canalNotif;
