@@ -1,5 +1,6 @@
 package com.reservas.app.usuario.controller;
 
+import com.reservas.app.usuario.dto.GoogleAuthRequestDto;
 import com.reservas.app.usuario.dto.LoginRequestDto;
 import com.reservas.app.usuario.dto.LoginResponseDto;
 import com.reservas.app.usuario.service.UsuarioService;
@@ -25,5 +26,11 @@ public class AuthController {
     @Operation(summary = "Login de usuario, retorna JWT Bearer token")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(usuarioService.login(request));
+    }
+
+    @PostMapping("/google")
+    @Operation(summary = "Login o registro con Google, retorna JWT Bearer token")
+    public ResponseEntity<LoginResponseDto> googleAuth(@Valid @RequestBody GoogleAuthRequestDto request) {
+        return ResponseEntity.ok(usuarioService.loginWithGoogle(request.getIdToken()));
     }
 }

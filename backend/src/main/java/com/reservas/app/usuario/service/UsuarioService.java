@@ -1,19 +1,28 @@
 package com.reservas.app.usuario.service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.reservas.app.common.JwtUtil;
 import com.reservas.app.usuario.dto.LoginRequestDto;
 import com.reservas.app.usuario.dto.LoginResponseDto;
 import com.reservas.app.usuario.dto.RegistroRequestDto;
 import com.reservas.app.usuario.dto.UsuarioResponseDto;
+import com.reservas.app.usuario.entity.RolUsuario;
 import com.reservas.app.usuario.entity.Usuario;
 import com.reservas.app.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +31,9 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+
+    @Value("${app.google.client-id}")
+    private String googleClientId;
 
     public List<UsuarioResponseDto> list() {
         return usuarioRepository.findAll().stream()
@@ -76,6 +88,64 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
         usuario.setOnboardingCompleto(true);
         return toDto(usuarioRepository.save(usuario));
+    }
+
+    @Transactional
+    public LoginResponseDto loginWithGoogle(String idTokenString) {
+        GoogleIdToken idToken = verifyGoogleToken(idTokenString);
+        GoogleIdToken.Payload payload = idToken.getPayload();
+
+        String googleId = payload.getSubject();
+        String email = payload.getEmail();
+        String nombre = (String) payload.get("name");
+
+        Usuario usuario = usuarioRepository.findByGoogleId(googleId)
+                .orElseGet(() -> usuarioRepository.findByEmail(email)
+                        .map(existing -> {
+                            existing.setGoogleId(googleId);
+                            return usuarioRepository.save(existing);
+                        })
+                        .orElseGet(() -> {
+                            Usuario nuevo = new Usuario();
+                            nuevo.setEmail(email);
+                            nuevo.setNombreCompleto(nombre != null ? nombre : email);
+                            nuevo.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+                            nuevo.setRol(RolUsuario.ADMIN_RESTAURANTE);
+                            nuevo.setGoogleId(googleId);
+                            return usuarioRepository.save(nuevo);
+                        }));
+
+        if (!usuario.getActivo()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario inactivo");
+        }
+
+        String token = jwtUtil.generateToken(
+                usuario.getEmail(),
+                usuario.getRol().name(),
+                usuario.getId()
+        );
+
+        return new LoginResponseDto(token, "Bearer", usuario.getId(),
+                usuario.getEmail(), usuario.getNombreCompleto(), usuario.getRol(), usuario.getOnboardingCompleto());
+    }
+
+    private GoogleIdToken verifyGoogleToken(String idTokenString) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token de Google inválido");
+            }
+            return idToken;
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Error al verificar token de Google");
+        }
     }
 
     public UsuarioResponseDto createUser(RegistroRequestDto request) {

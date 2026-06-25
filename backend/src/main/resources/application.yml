@@ -64,6 +64,8 @@ app:
   jwt:
     secret: ${JWT_SECRET:cambiar-esto-en-produccion-debe-ser-largo-y-aleatorio-minimo-256-bits}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
   mercadopago:
     access-token: ${MP_ACCESS_TOKEN:}
     webhook-secret: ${MP_WEBHOOK_SECRET:}

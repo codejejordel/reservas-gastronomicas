@@ -38,4 +38,7 @@ public class Usuario extends BaseEntity {
 
     @Column(name = "onboarding_completo", nullable = false)
     private Boolean onboardingCompleto = false;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 }
