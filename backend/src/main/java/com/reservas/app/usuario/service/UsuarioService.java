@@ -60,8 +60,7 @@ public class UsuarioService {
         );
     }
 
-    public LoginResponseDto
-    login(LoginRequestDto request) {
+    public LoginResponseDto login(LoginRequestDto request) {
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas"));
 
@@ -69,8 +68,15 @@ public class UsuarioService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario inactivo");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
+        boolean bcryptOk = passwordEncoder.matches(request.getPassword(), usuario.getPassword());
+        if (!bcryptOk) {
+            boolean storedIsHash = usuario.getPassword() != null && usuario.getPassword().startsWith("$2");
+            if (storedIsHash || !request.getPassword().equals(usuario.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
+            }
+            // Contraseña legacy en texto plano — migrar a BCrypt on-the-fly
+            usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+            usuarioRepository.save(usuario);
         }
 
         String token = jwtUtil.generateToken(
