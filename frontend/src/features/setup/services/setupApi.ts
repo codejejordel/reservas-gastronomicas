@@ -136,4 +136,22 @@ export const setupApi = {
 
   createMesa: (dto: CreateMesaDto): Promise<MesaResponseDto> =>
     apiFetch('/api/mesa', { method: 'POST', body: JSON.stringify(dto) }),
+
+  getOnboardingStatus: (): Promise<OnboardingStatusDto> =>
+    apiFetch('/onboarding/status'),
+
+  saveOnboardingProgress: (dto: OnboardingUpdateDto): Promise<OnboardingStatusDto> =>
+    apiFetch('/onboarding', { method: 'PUT', body: JSON.stringify(dto) }),
+}
+
+export interface OnboardingStatusDto {
+  usuarioId: number
+  pasoActual: number
+  completado: boolean
+  datos: Record<string, unknown>
+}
+
+export interface OnboardingUpdateDto {
+  pasoActual: number
+  datos?: Record<string, unknown>
 }

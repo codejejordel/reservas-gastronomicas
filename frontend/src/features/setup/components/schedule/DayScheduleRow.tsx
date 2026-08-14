@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Plus, Copy } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Plus, Copy, Check } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import type { DaySchedule, DayKey } from '@/features/setup/state/setupTypes'
 import { DAY_KEYS, DAY_LABELS } from '@/features/setup/state/setupTypes'
 import { Switch } from '@/shared/ui/switch'
@@ -9,10 +9,11 @@ import { TimeRangeInput } from './TimeRangeInput'
 interface CopyMenuProps {
   fromDay: DayKey
   onCopy: (toDays: DayKey[]) => void
+  onCopied: () => void
   onClose: () => void
 }
 
-function CopyMenu({ fromDay, onCopy, onClose }: CopyMenuProps) {
+function CopyMenu({ fromDay, onCopy, onCopied, onClose }: CopyMenuProps) {
   const weekdays: DayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri']
   const weekend: DayKey[] = ['sat', 'sun']
   const others = DAY_KEYS.filter(d => d !== fromDay)
@@ -36,7 +37,7 @@ function CopyMenu({ fromDay, onCopy, onClose }: CopyMenuProps) {
         { label: 'Todos los días', days: others },
       ].map(({ label, days }) => days.length > 0 && (
         <button key={label} type="button"
-          onClick={() => { onCopy(days); onClose() }}
+          onClick={() => { onCopy(days); onCopied(); onClose() }}
           className="w-full text-left px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container transition-colors"
         >
           {label}
@@ -45,7 +46,7 @@ function CopyMenu({ fromDay, onCopy, onClose }: CopyMenuProps) {
       <div className="border-t border-outline-variant" />
       {DAY_KEYS.filter(d => d !== fromDay).map(d => (
         <button key={d} type="button"
-          onClick={() => { onCopy([d]); onClose() }}
+          onClick={() => { onCopy([d]); onCopied(); onClose() }}
           className="w-full text-left px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition-colors"
         >
           Solo {DAY_LABELS[d]}
@@ -68,8 +69,15 @@ interface DayScheduleRowProps {
 
 export function DayScheduleRow({ day, schedule, rangeErrors, onToggle, onTimeChange, onAddRange, onRemoveRange, onCopy }: DayScheduleRowProps) {
   const [copyOpen, setCopyOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const canAddRange = schedule.ranges.length < 3
+
+  useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 1500)
+    return () => clearTimeout(t)
+  }, [copied])
 
   return (
     <div ref={containerRef} className="py-3 border-b border-outline-variant last:border-0">
@@ -98,14 +106,14 @@ export function DayScheduleRow({ day, schedule, rangeErrors, onToggle, onTimeCha
             <button
               type="button"
               onClick={() => setCopyOpen(v => !v)}
-              className="p-1 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors"
-              title="Copiar a otros días"
+              className={`p-1 rounded-md transition-colors ${copied ? 'text-success bg-success/10' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'}`}
+              title={copied ? '¡Copiado!' : 'Copiar a otros días'}
             >
-              <Copy size={13} />
+              {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
             <AnimatePresence>
               {copyOpen && (
-                <CopyMenu fromDay={day} onCopy={onCopy} onClose={() => setCopyOpen(false)} />
+                <CopyMenu fromDay={day} onCopy={onCopy} onCopied={() => setCopied(true)} onClose={() => setCopyOpen(false)} />
               )}
             </AnimatePresence>
           </div>
@@ -137,14 +145,14 @@ export function DayScheduleRow({ day, schedule, rangeErrors, onToggle, onTimeCha
                         <button
                           type="button"
                           onClick={() => setCopyOpen(v => !v)}
-                          className="p-1 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors"
-                          title="Copiar a otros días"
+                          className={`p-1 rounded-md transition-colors ${copied ? 'text-success bg-success/10' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'}`}
+                          title={copied ? '¡Copiado!' : 'Copiar a otros días'}
                         >
-                          <Copy size={13} />
+                          {copied ? <Check size={13} /> : <Copy size={13} />}
                         </button>
                         <AnimatePresence>
                           {copyOpen && (
-                            <CopyMenu fromDay={day} onCopy={onCopy} onClose={() => setCopyOpen(false)} />
+                            <CopyMenu fromDay={day} onCopy={onCopy} onCopied={() => setCopied(true)} onClose={() => setCopyOpen(false)} />
                           )}
                         </AnimatePresence>
                       </div>
