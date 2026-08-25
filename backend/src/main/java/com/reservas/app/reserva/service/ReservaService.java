@@ -218,8 +218,10 @@ public class ReservaService {
             reserva.setEstado(EstadoReserva.NO_SHOW);
 
             Cliente cliente = reserva.getCliente();
-            cliente.setCantNoShows(cliente.getCantNoShows() + 1);
-            clienteRepository.save(cliente);
+            if (cliente != null) {
+                cliente.setCantNoShows(cliente.getCantNoShows() + 1);
+                clienteRepository.save(cliente);
+            }
 
             return toDto(reservaRepository.save(reserva));
         } catch (ObjectOptimisticLockingFailureException e) {
