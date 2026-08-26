@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
 import type { RestaurantePublic, SucursalPublic, ClienteData } from '../types/bookingTypes'
 import { makeDefaultClienteData } from '../types/bookingTypes'
+import type { CotizacionReserva } from '../services/bookingApi'
+import { useCotizacionReserva } from '../hooks/useCotizacionReserva'
 
 export interface BookingState {
   restaurante: RestaurantePublic | null
@@ -33,7 +35,14 @@ export interface BookingActions {
   reset: () => void
 }
 
-const BookingContext = createContext<(BookingState & BookingActions) | null>(null)
+export interface BookingQuoteState {
+  cotizacion: CotizacionReserva | null
+  cotizacionLoading: boolean
+  cotizacionError: string | null
+  retryCotizacion: () => void
+}
+
+const BookingContext = createContext<(BookingState & BookingActions & BookingQuoteState) | null>(null)
 
 function makeInitialState(): BookingState {
   return {
@@ -53,6 +62,7 @@ function makeInitialState(): BookingState {
 
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BookingState>(makeInitialState())
+  const cotizacionQuery = useCotizacionReserva(state.sucursal?.id, state.partySize)
 
   // Memoizar todas las acciones para evitar recreación en cada render
   const setRestaurante = useCallback((r: RestaurantePublic) => setState(s => ({ ...s, restaurante: r })), [])
@@ -71,6 +81,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const setSubmitting = useCallback((sub: boolean) => setState(s => ({ ...s, submitting: sub })), [])
   const setError = useCallback((e: string | null) => setState(s => ({ ...s, error: e })), [])
   const reset = useCallback(() => setState(makeInitialState()), [])
+  const retryCotizacion = useCallback(() => {
+    void cotizacionQuery.refetch()
+  }, [cotizacionQuery.refetch])
 
   const actions = useMemo<BookingActions>(() => ({
     setRestaurante,
@@ -89,7 +102,20 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     reset,
   }), [setRestaurante, setSucursal, setMetodoPago, setAcceptedTerms, setPartySize, setFecha, setHora, setClienteField, goToStep, nextStep, prevStep, setSubmitting, setError, reset])
 
-  const value = useMemo(() => ({ ...state, ...actions }), [state, actions])
+  const cotizacion = cotizacionQuery.data ?? null
+  const cotizacionLoading = !cotizacion && cotizacionQuery.isFetching
+  const cotizacionError = cotizacionQuery.isError && !cotizacionQuery.isFetching
+    ? cotizacionQuery.error.message || 'No pudimos calcular el total de tu reserva. Intentá nuevamente.'
+    : null
+
+  const value = useMemo(() => ({
+    ...state,
+    ...actions,
+    cotizacion,
+    cotizacionLoading,
+    cotizacionError,
+    retryCotizacion,
+  }), [state, actions, cotizacion, cotizacionLoading, cotizacionError, retryCotizacion])
 
   return (
     <BookingContext.Provider value={value}>

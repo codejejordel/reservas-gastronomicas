@@ -3,16 +3,22 @@ package com.reservas.app.reserva.controller;
 import com.reservas.app.reserva.dto.CancelarReservaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaPublicaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaRequestDto;
+import com.reservas.app.reserva.dto.ReservaDetalleResponseDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -20,6 +26,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/reserva")
+@Validated
 @RequiredArgsConstructor
 @Tag(name = "Reserva")
 public class ReservaController {
@@ -38,6 +45,12 @@ public class ReservaController {
         return ResponseEntity.ok(reservaService.getById(id));
     }
 
+    @GetMapping("/{id}/detalle")
+    @Operation(summary = "Obtener el contexto operativo y mesas activas de una reserva")
+    public ResponseEntity<ReservaDetalleResponseDto> getDetalle(@PathVariable Long id) {
+        return ResponseEntity.ok(reservaService.getDetalle(id));
+    }
+
     @GetMapping("/codigo/{codigo}")
     @Operation(summary = "Obtener reserva por código")
     public ResponseEntity<ReservaResponseDto> getByCodigo(@PathVariable String codigo) {
@@ -51,6 +64,21 @@ public class ReservaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             @RequestParam(required = false) EstadoReserva estado) {
         return ResponseEntity.ok(reservaService.listBySucursal(sucursalId, fecha, estado));
+    }
+
+    @GetMapping("/sucursal/{sucursalId}/buscar")
+    @Operation(summary = "Buscar reservas paginadas de una sucursal")
+    public ResponseEntity<Page<ReservaResponseDto>> searchBySucursal(
+            @PathVariable Long sucursalId,
+            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) List<EstadoReserva> statuses,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
+            @RequestParam(defaultValue = "ASC") Sort.Direction sortDirection) {
+        return ResponseEntity.ok(reservaService.searchBySucursal(
+                sucursalId, desde, hasta, statuses, q, page, size, sortDirection));
     }
 
     @GetMapping("/cliente/{clienteId}")

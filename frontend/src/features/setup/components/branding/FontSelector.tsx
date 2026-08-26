@@ -26,7 +26,7 @@ export function FontSelector({ label, value, onChange }: FontSelectorProps) {
             className={`flex flex-col gap-0.5 px-3 py-2 rounded-xl border text-left transition-all ${
               value === f.id
                 ? 'border-primary bg-primary/5'
-                : 'border-outline-variant bg-white hover:border-primary/40'
+                : 'border-outline-variant bg-surface-container-lowest hover:border-primary/40'
             }`}
           >
             <span className="text-[10px] font-semibold text-on-surface-variant">{f.name}</span>

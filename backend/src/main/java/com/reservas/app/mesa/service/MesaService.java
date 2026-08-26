@@ -41,6 +41,35 @@ public class MesaService {
         return toDto(mesaRepository.save(mesa));
     }
 
+    @Transactional
+    public List<MesaResponseDto> createBulk(List<CreateMesaRequestDto> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debés enviar al menos una mesa");
+        }
+        Long sucursalId = requests.get(0).getSucursalId();
+        if (requests.stream().anyMatch(request -> !sucursalId.equals(request.getSucursalId()))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Todas las mesas deben pertenecer a la misma sucursal");
+        }
+        Sucursal sucursal = sucursalRepository.findById(sucursalId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sucursal no encontrada"));
+        List<String> nombres = requests.stream().map(CreateMesaRequestDto::getNombre).toList();
+        if (nombres.stream().map(String::toLowerCase).distinct().count() != nombres.size()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No puede haber nombres de mesa duplicados");
+        }
+        if (nombres.stream().anyMatch(nombre -> mesaRepository.existsBySucursalIdAndNombre(sucursalId, nombre))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una mesa con ese nombre en la sucursal");
+        }
+        List<Mesa> mesas = requests.stream().map(request -> {
+            Mesa mesa = new Mesa();
+            mesa.setSucursal(sucursal);
+            mesa.setNombre(request.getNombre());
+            mesa.setUbicacion(request.getUbicacion());
+            if (request.getCapacidad() != null) mesa.setCapacidad(request.getCapacidad());
+            return mesa;
+        }).toList();
+        return mesaRepository.saveAll(mesas).stream().map(this::toDto).toList();
+    }
+
     public MesaResponseDto getById(Long id) {
         return toDto(findOrThrow(id));
     }

@@ -12,7 +12,7 @@ import { useRestaurantePublico } from './hooks/useRestaurantePublico'
 
 function BookingWizardContent() {
   const { slug } = useParams({ from: '/r/$slug/reservar' })
-  const { currentStep, setRestaurante } = useBooking()
+  const { currentStep, setRestaurante, cotizacion } = useBooking()
   const { canSubmit, handleSubmit, submitting } = useStep4Submit()
 
   const { data: restaurante, isLoading, isError } = useRestaurantePublico(slug)
@@ -55,7 +55,7 @@ function BookingWizardContent() {
       case 3:
         return <Step3CustomerDataPage />
       case 4:
-        return <Step4ConfirmacionPagoPage />
+        return <Step4ConfirmacionPagoPage canSubmit={canSubmit} handleSubmit={handleSubmit} submitting={submitting} />
       default:
         return <Step0SucursalPage />
     }
@@ -64,7 +64,7 @@ function BookingWizardContent() {
   return (
     <BookingLayout
       onFinalizar={currentStep === 4 ? handleSubmit : undefined}
-      canFinalizar={currentStep === 4 ? canSubmit : undefined}
+      canFinalizar={currentStep === 4 ? canSubmit && !!cotizacion : undefined}
       submitting={currentStep === 4 ? submitting : undefined}
     >
       {renderStep()}

@@ -37,6 +37,29 @@ export async function getDisponibilidad(
   return apiFetch(`/api/sucursal/${sucursalId}/disponibilidad?${params.toString()}`, { skipAuth: true })
 }
 
+// === Cotización de reserva ===
+export interface CotizacionReserva {
+  cargoServicioUnitario: number
+  cargoServicioTotal: number
+  cobraSenia: boolean
+  montoSenia: number
+  totalAPagarAhora: number
+  horasCancelacionLibre: number
+  toleranciaMinutos: number
+}
+
+export async function getCotizacionReserva(
+  sucursalId: number,
+  personas: number,
+  signal?: AbortSignal,
+): Promise<CotizacionReserva> {
+  const params = new URLSearchParams({ personas: String(personas) })
+  return apiFetch(`/api/sucursal/${sucursalId}/reserva/cotizacion?${params.toString()}`, {
+    skipAuth: true,
+    signal,
+  })
+}
+
 // === Reserva Pública ===
 export interface ClienteInlineData {
   nombre: string
@@ -73,6 +96,34 @@ export interface ReservaResponse {
   fechaCreacion: string
 }
 
+export type EstadoPago = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'REEMBOLSADO' | 'EXPIRADO'
+
+export interface PagoResponse {
+  id: number
+  reservaId: number
+  monto: number
+  estado: EstadoPago
+  mercadoPagoPaymentId: string | null
+  mercadoPagoPreferenceId: string | null
+  linkPago: string | null
+  fechaPago: string | null
+  fechaExpiracion: string | null
+  metodoPago: string | null
+  montoReembolsado: number
+  fechaCreacion: string
+}
+
+export type PagoReturnOutcome = 'APPROVED' | 'PENDING' | 'REJECTED' | 'EXPIRED' | 'UNVERIFIED'
+
+export interface PagoReturnResponse {
+  codigoReserva: string
+  estadoReserva: string
+  estadoPago: EstadoPago | null
+  providerStatus: string | null
+  verified: boolean
+  outcome: PagoReturnOutcome
+}
+
 export async function crearReservaPublica(payload: CrearReservaPublicaPayload): Promise<ReservaResponse> {
   return apiFetch('/api/reserva/public', {
     method: 'POST',
@@ -81,6 +132,26 @@ export async function crearReservaPublica(payload: CrearReservaPublicaPayload): 
   })
 }
 
-export async function getReservaByCodigo(codigo: string): Promise<ReservaResponse> {
-  return apiFetch(`/api/reserva/codigo/${codigo}`, { skipAuth: true })
+export async function crearPreferenciaPago(codigoReserva: string): Promise<PagoResponse> {
+  return apiFetch(`/api/reserva/public/${encodeURIComponent(codigoReserva)}/pago/preference`, {
+    method: 'POST',
+    skipAuth: true,
+  })
+}
+
+export async function reconciliarRetornoPago(
+  codigoReserva: string,
+  paymentId: string | null,
+  signal?: AbortSignal,
+): Promise<PagoReturnResponse> {
+  return apiFetch(`/api/reserva/public/${encodeURIComponent(codigoReserva)}/pago/return`, {
+    method: 'POST',
+    skipAuth: true,
+    signal,
+    body: JSON.stringify({ paymentId }),
+  })
+}
+
+export async function getReservaByCodigo(codigo: string, signal?: AbortSignal): Promise<ReservaResponse> {
+  return apiFetch(`/api/reserva/codigo/${codigo}`, { skipAuth: true, signal })
 }

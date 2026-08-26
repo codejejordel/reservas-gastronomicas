@@ -1,6 +1,7 @@
 package com.reservas.app.config;
 
 import com.reservas.app.common.JwtUtil;
+import com.reservas.app.usuario.repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final UsuarioRepository usuarioRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,9 +45,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String email = jwtUtil.getEmailFromToken(token);
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        Integer authVersion = jwtUtil.getAuthVersionFromToken(token);
+        boolean credentialsCurrent = userId != null && authVersion != null && usuarioRepository.findById(userId)
+                .map(usuario -> usuario.getActivo() && authVersion.equals(usuario.getAuthVersion()))
+                .orElse(false);
 
         // Solo setea el contexto si no hay autenticación previa en el request.
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (credentialsCurrent && email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 

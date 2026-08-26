@@ -41,4 +41,7 @@ public class Usuario extends BaseEntity {
 
     @Column(name = "google_id", unique = true)
     private String googleId;
+
+    @Column(name = "auth_version", nullable = false)
+    private Integer authVersion = 0;
 }

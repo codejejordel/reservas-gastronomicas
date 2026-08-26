@@ -22,7 +22,7 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
 
     @PostMapping
-    @Operation(summary = "Crear nuevo usuario desde el back office")
+    @Operation(summary = "Registrar administrador de restaurante")
     public ResponseEntity<UsuarioResponseDto> create(@Valid @RequestBody RegistroRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.createUser(request));
     }

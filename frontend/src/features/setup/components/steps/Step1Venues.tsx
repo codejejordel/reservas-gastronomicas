@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Plus, Store, MapPin, Phone, Loader2 } from 'lucide-react'
 import { useSetupWizard } from '@/features/setup/state/SetupWizardContext'
 import { useSubmitStep1 } from '@/features/setup/hooks/useSubmitStep1'
+import { useNumericInput } from '@/features/setup/hooks/useNumericInput'
 import type { Venue } from '@/features/setup/state/setupTypes'
 import { InputWithIcon } from '@/shared/ui/InputWithIcon'
 import { FieldLabel } from '@/shared/ui/FieldLabel'
@@ -14,6 +15,7 @@ type DraftVenue = Omit<Venue, 'id'>
 const emptyDraft = (): DraftVenue => ({ name: '', address: '', phone: '' })
 
 export function Step1Venues() {
+  const phoneInput = useNumericInput({ allowPhone: true })
   const { venues, addVenue, updateVenue, removeVenue, prevStep } = useSetupWizard()
   const { submit, isPending, error } = useSubmitStep1()
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -66,7 +68,9 @@ export function Step1Venues() {
           <div>
             <FieldLabel>Teléfono de contacto</FieldLabel>
             <InputWithIcon icon={Phone} type="tel" placeholder="+54 11 1234-5678"
-              value={draft.phone} onChange={e => setDraft(d => ({ ...d, phone: e.target.value }))} />
+              value={draft.phone}
+              onKeyDown={phoneInput.onKeyDown}
+              onChange={e => setDraft(d => ({ ...d, phone: phoneInput.sanitize(e.target.value) }))} />
           </div>
         </div>
 

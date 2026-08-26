@@ -3,6 +3,7 @@ import { Pencil, Trash2, Store, MapPin, Phone } from 'lucide-react'
 import type { Venue } from '@/features/setup/state/setupTypes'
 import { InputWithIcon } from '@/shared/ui/InputWithIcon'
 import { FieldLabel } from '@/shared/ui/FieldLabel'
+import { useNumericInput } from '@/features/setup/hooks/useNumericInput'
 
 interface VenueCardProps {
   venue: Venue
@@ -16,6 +17,7 @@ interface VenueCardProps {
 }
 
 export function VenueCard({ venue, index, isEditing, canDelete, onEdit, onCollapse, onDelete, onChange }: VenueCardProps) {
+  const phoneInput = useNumericInput({ allowPhone: true })
   const displayName = venue.name.trim() || `Local ${index + 1}`
 
   return (
@@ -93,7 +95,9 @@ export function VenueCard({ venue, index, isEditing, canDelete, onEdit, onCollap
               <div>
                 <FieldLabel>Teléfono de contacto</FieldLabel>
                 <InputWithIcon icon={Phone} type="tel" placeholder="+54 11 1234-5678"
-                  value={venue.phone} onChange={e => onChange('phone', e.target.value)} />
+                  value={venue.phone}
+                  onKeyDown={phoneInput.onKeyDown}
+                  onChange={e => onChange('phone', phoneInput.sanitize(e.target.value))} />
               </div>
             </div>
           </motion.div>

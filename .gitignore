@@ -31,6 +31,7 @@ bin/
 # ===== IDE - VSCode =====
 .vscode/
 *.code-workspace
+.codegraph/
 
 # ===== Node / Frontend =====
 node_modules/

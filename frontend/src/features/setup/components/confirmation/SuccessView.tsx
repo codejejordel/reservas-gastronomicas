@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { Copy, Check, ExternalLink, LayoutDashboard, Share2 } from 'lucide-react'
 import { AnimatedCheck } from './AnimatedCheck'
@@ -16,13 +17,19 @@ const NEXT_STEPS = [
   { icon: <ExternalLink size={14} />, text: 'Hacé una reserva de prueba en tu agenda' },
 ]
 
+function buildAgendaUrl(slug: string): string {
+  const path = `/r/${slug || 'mi-agenda'}/reservar`
+  return `${window.location.origin}${path}`
+}
+
 export function SuccessView({ brand, restaurant }: SuccessViewProps) {
   const [copied, setCopied] = useState(false)
-  const agendaUrl = `tuapp.com/r/${restaurant.slug || 'mi-agenda'}`
+  const navigate = useNavigate()
+  const agendaFullUrl = buildAgendaUrl(restaurant.slug)
   const headingFont = getFontCss(brand.headingFont)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(`https://${agendaUrl}`)
+    navigator.clipboard.writeText(agendaFullUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -62,7 +69,7 @@ export function SuccessView({ brand, restaurant }: SuccessViewProps) {
         className="flex items-center gap-2 border border-outline-variant rounded-xl bg-surface-container-lowest px-4 py-3 w-full"
         style={{ maxWidth: 420 }}
       >
-        <span className="flex-1 text-sm font-mono text-on-surface truncate">{agendaUrl}</span>
+        <span className="flex-1 text-sm font-mono text-on-surface truncate">{agendaFullUrl}</span>
         <button
           type="button"
           onClick={handleCopy}
@@ -83,13 +90,14 @@ export function SuccessView({ brand, restaurant }: SuccessViewProps) {
       >
         <button
           type="button"
-          onClick={() => window.open(`https://${agendaUrl}`, '_blank')}
+          onClick={() => window.open(agendaFullUrl, '_blank')}
           className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-primary rounded-xl text-sm font-semibold text-primary transition-all hover:bg-surface-container active:scale-[0.98]"
         >
           <ExternalLink size={14} /> Ver mi agenda
         </button>
         <button
           type="button"
+          onClick={() => navigate({ to: '/dashboard' })}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-on-primary bg-primary transition-all hover:opacity-90 active:scale-[0.98]"
         >
           <LayoutDashboard size={14} /> Ir al panel

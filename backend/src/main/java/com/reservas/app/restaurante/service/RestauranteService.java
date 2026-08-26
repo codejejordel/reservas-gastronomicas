@@ -1,16 +1,19 @@
 package com.reservas.app.restaurante.service;
 
+import com.reservas.app.common.ImagenStorageService;
 import com.reservas.app.restaurante.dto.CreateRestauranteRequestDto;
 import com.reservas.app.restaurante.dto.DisponibilidadResponseDto;
 import com.reservas.app.restaurante.dto.RestauranteResponseDto;
 import com.reservas.app.restaurante.dto.UpdateRestauranteRequestDto;
 import com.reservas.app.restaurante.entity.Restaurante;
+import com.reservas.app.restaurante.entity.TipoImagenRestaurante;
 import com.reservas.app.restaurante.repository.RestauranteRepository;
 import com.reservas.app.usuario.entity.Usuario;
 import com.reservas.app.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -21,6 +24,7 @@ public class RestauranteService {
 
     private final RestauranteRepository restauranteRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ImagenStorageService imagenStorageService;
 
     public RestauranteResponseDto create(CreateRestauranteRequestDto request) {
         if (restauranteRepository.existsBySlugPublico(request.getSlugPublico())) {
@@ -102,6 +106,25 @@ public class RestauranteService {
         if (request.getSitioWeb() != null) restaurante.setSitioWeb(request.getSitioWeb());
         if (request.getEmailComercial() != null) restaurante.setEmailComercial(request.getEmailComercial());
 
+        return toDto(restauranteRepository.save(restaurante));
+    }
+
+    public RestauranteResponseDto subirImagen(Long id, TipoImagenRestaurante tipo, MultipartFile archivo) {
+        Restaurante restaurante = findOrThrow(id);
+        String urlAnterior = tipo == TipoImagenRestaurante.LOGO ? restaurante.getLogoUrl() : restaurante.getFotoLocalUrl();
+        String url = imagenStorageService.guardar(archivo, "img/restaurante/" + id);
+        if (tipo == TipoImagenRestaurante.LOGO) restaurante.setLogoUrl(url);
+        else restaurante.setFotoLocalUrl(url);
+        imagenStorageService.eliminar(urlAnterior);
+        return toDto(restauranteRepository.save(restaurante));
+    }
+
+    public RestauranteResponseDto eliminarImagen(Long id, TipoImagenRestaurante tipo) {
+        Restaurante restaurante = findOrThrow(id);
+        String url = tipo == TipoImagenRestaurante.LOGO ? restaurante.getLogoUrl() : restaurante.getFotoLocalUrl();
+        if (tipo == TipoImagenRestaurante.LOGO) restaurante.setLogoUrl(null);
+        else restaurante.setFotoLocalUrl(null);
+        imagenStorageService.eliminar(url);
         return toDto(restauranteRepository.save(restaurante));
     }
 

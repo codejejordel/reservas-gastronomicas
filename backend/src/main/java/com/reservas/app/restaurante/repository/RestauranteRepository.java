@@ -24,4 +24,6 @@ public interface RestauranteRepository extends JpaRepository<Restaurante, Long> 
     List<Restaurante> findByActivoTrue();
 
     Optional<Restaurante> findByUsuarioAdminId(Long usuarioAdminId);
+
+    boolean existsByIdAndUsuarioAdminId(Long id, Long usuarioAdminId);
 }

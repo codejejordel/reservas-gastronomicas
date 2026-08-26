@@ -1,12 +1,12 @@
 package com.reservas.app.config;
 
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,12 +30,18 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // Auth
                         .requestMatchers("/auth/**").permitAll()
+                        // Uploaded public assets
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // Swagger / OpenAPI
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         // Actuator
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+
+                        // WebSocket handshake; STOMP CONNECT authenticates the bearer token.
+                        .requestMatchers(HttpMethod.GET, "/ws").permitAll()
 
                         //Usuario
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
@@ -45,6 +51,8 @@ public class SecurityConfig {
                         
                         // Reserva pública
                         .requestMatchers(HttpMethod.POST, "/reserva/public").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/reserva/public/*/pago/preference").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/reserva/public/*/pago/return").permitAll()
                         .requestMatchers(HttpMethod.GET, "/reserva/codigo/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/reserva/*/cancelar").permitAll()
 
@@ -58,6 +66,7 @@ public class SecurityConfig {
                         // Sucursal pública
                         .requestMatchers(HttpMethod.GET, "/sucursal/restaurante/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/disponibilidad").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sucursal/*/reserva/cotizacion").permitAll()
 
                         //Sucursal
                         .requestMatchers(HttpMethod.GET, "/sucursal/*/horario/**").permitAll()

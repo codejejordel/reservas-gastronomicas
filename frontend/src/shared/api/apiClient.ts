@@ -2,13 +2,23 @@ import { useAuthStore } from '@/features/auth/store/authStore'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
-export interface ApiError {
-  status: number
-  message: string
+export function apiAssetUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined
+  return path.startsWith('http') || path.startsWith('data:') ? path : `${BASE_URL}${path}`
+}
+
+export class ApiError extends Error {
+  public readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
 }
 
 export function createApiError(status: number, message: string): ApiError {
-  return { status, message }
+  return new ApiError(status, message)
 }
 
 interface RequestOptions extends RequestInit {
@@ -18,8 +28,9 @@ interface RequestOptions extends RequestInit {
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { skipAuth = false, ...fetchOptions } = options
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+  const headers: Record<string, string> = {}
+  if (!(fetchOptions.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const existingHeaders = fetchOptions.headers as Record<string, string> | undefined
@@ -48,7 +59,10 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
 
   if (!response.ok) {
-    const message = data && typeof data === 'object' && 'message' in data 
+    if (response.status === 401 && !skipAuth) {
+      useAuthStore.getState().logout()
+    }
+    const message = data && typeof data === 'object' && 'message' in data
       ? (data.message as string)
       : 'Error en la solicitud'
     throw createApiError(response.status, message)

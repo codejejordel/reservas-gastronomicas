@@ -2,14 +2,18 @@ package com.reservas.app.reserva.service;
 
 import com.reservas.app.cliente.entity.Cliente;
 import com.reservas.app.cliente.repository.ClienteRepository;
+import com.reservas.app.reserva.asignacion.dto.AsignacionMesaResponseDto;
+import com.reservas.app.reserva.asignacion.repository.AsignacionMesaRepository;
 import com.reservas.app.reserva.dto.CancelarReservaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaPublicaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaRequestDto;
+import com.reservas.app.reserva.dto.ReservaDetalleResponseDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
 import com.reservas.app.reserva.entity.CanceladaPor;
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.entity.Reserva;
 import com.reservas.app.reserva.repository.ReservaRepository;
+import com.reservas.app.reserva.realtime.ReservaCreatedEvent;
 import com.reservas.app.reserva.spec.ReservaSpecs;
 import com.reservas.app.mesa.repository.MesaRepository;
 import com.reservas.app.sucursal.configuracion.entity.ConfiguracionSucursal;
@@ -17,8 +21,13 @@ import com.reservas.app.sucursal.configuracion.repository.ConfiguracionSucursalR
 import com.reservas.app.sucursal.entity.Sucursal;
 import com.reservas.app.sucursal.repository.SucursalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +48,8 @@ public class ReservaService {
     private final SucursalRepository sucursalRepository;
     private final ConfiguracionSucursalRepository configuracionRepository;
     private final MesaRepository mesaRepository;
+    private final AsignacionMesaRepository asignacionMesaRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ReservaResponseDto create(CreateReservaRequestDto request) {
@@ -84,7 +95,9 @@ public class ReservaService {
             reserva.setFechaConfirmacion(LocalDateTime.now());
         }
 
-        return toDto(reservaRepository.save(reserva));
+        Reserva saved = reservaRepository.save(reserva);
+        eventPublisher.publishEvent(ReservaCreatedEvent.from(saved));
+        return toDto(saved);
     }
 
     @Transactional
@@ -139,7 +152,9 @@ public class ReservaService {
             reserva.setFechaConfirmacion(LocalDateTime.now());
         }
 
-        return toDto(reservaRepository.save(reserva));
+        Reserva saved = reservaRepository.save(reserva);
+        eventPublisher.publishEvent(ReservaCreatedEvent.from(saved));
+        return toDto(saved);
     }
 
     public ReservaResponseDto getById(Long id) {
@@ -157,6 +172,53 @@ public class ReservaService {
                 .and(ReservaSpecs.conFecha(fecha))
                 .and(ReservaSpecs.conEstado(estado));
         return reservaRepository.findAll(spec).stream().map(this::toDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReservaResponseDto> searchBySucursal(Long sucursalId, LocalDate desde, LocalDate hasta,
+                                                       List<EstadoReserva> estados, String busqueda,
+                                                       int page, int size, Sort.Direction direccionOrden) {
+        if (page < 0 || size < 1 || size > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La página debe ser mayor o igual a cero y el tamaño debe estar entre 1 y 50");
+        }
+        if (desde != null && hasta != null && desde.isAfter(hasta)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La fecha desde no puede ser posterior a la fecha hasta");
+        }
+
+        Specification<Reserva> spec = Specification.where(ReservaSpecs.conSucursal(sucursalId))
+                .and(ReservaSpecs.entreFehas(desde, hasta))
+                .and(ReservaSpecs.conEstados(estados))
+                .and(ReservaSpecs.conBusqueda(busqueda));
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by(direccionOrden, "fechaReserva", "horaReserva"));
+
+        return reservaRepository.findAll(spec, pageable).map(this::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public ReservaDetalleResponseDto getDetalle(Long id) {
+        Reserva reserva = findOrThrow(id);
+        Cliente cliente = reserva.getCliente();
+        String contactoNombre = cliente != null ? cliente.getNombreCompleto() : reserva.getNombreInvitado();
+        String contactoEmail = cliente != null ? cliente.getEmail() : reserva.getEmailInvitado();
+        String contactoTelefono = cliente != null ? cliente.getTelefono() : reserva.getTelefonoInvitado();
+        List<AsignacionMesaResponseDto> asignaciones = asignacionMesaRepository
+                .findByReservaIdAndActivaTrue(id)
+                .stream()
+                .map(a -> new AsignacionMesaResponseDto(
+                        a.getId(), a.getReserva().getId(), a.getMesa().getId(),
+                        a.getMesa().getNombre(), a.getMesa().getCapacidad(),
+                        a.getFechaAsignacion(), a.getActiva()))
+                .toList();
+
+        return new ReservaDetalleResponseDto(
+                reserva.getId(), reserva.getCodigoReserva(), reserva.getFechaReserva(), reserva.getHoraReserva(),
+                reserva.getCantPersonas(), reserva.getEstado(), cliente != null ? cliente.getId() : null,
+                contactoNombre, contactoEmail, contactoTelefono, reserva.getObservaciones(), reserva.getCanalNotif(),
+                reserva.getFechaConfirmacion(), reserva.getFechaCancelacion(), reserva.getMotivoCancelacion(),
+                reserva.getCanceladaPor(), reserva.getFechaCreacion(), reserva.getFechaActualizacion(), asignaciones);
     }
 
     public List<ReservaResponseDto> listByCliente(Long clienteId) {

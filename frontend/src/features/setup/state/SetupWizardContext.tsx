@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
 import type { Venue, ScheduleState, WeekSchedule, DayKey, TimeRange, TablesState, Table, BrandSettings, RestaurantData, PersistedIds } from './setupTypes'
 import { makeDefaultWeekSchedule, makeDefaultTables, makeDefaultBrand, makeDefaultRestaurant, makeDefaultPersistedIds, slugify } from './setupTypes'
 import { clearWizardProgress } from './setupPersistence'
+import { useOnboardingSync, progressDataToState } from '@/features/setup/hooks/useOnboardingSync'
+import { useAuthStore } from '@/features/auth/store/authStore'
 
 interface SetupWizardState {
   currentStep: number
@@ -79,9 +81,12 @@ function patchTables(state: TablesState, scope: 'global' | number, list: Table[]
 }
 
 export function SetupWizardProvider({ children }: { children: ReactNode }) {
-  clearWizardProgress()
   const [currentStep, setCurrentStep] = useState(0)
   const [ids, setIds] = useState<PersistedIds>(makeDefaultPersistedIds())
+  const { loadProgress, saveProgress } = useOnboardingSync()
+  const { token } = useAuthStore()
+  const loadedRef = useRef(false)
+  const isRestoringRef = useRef(false)
   const [restaurant, setRestaurant] = useState<RestaurantData>(() => makeDefaultRestaurant())
   const [venues, setVenues] = useState<Venue[]>([])
   const [schedule, setSchedule_] = useState<ScheduleState>({
@@ -97,6 +102,30 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
 
   const setStep4Expanded = (v: boolean) => setStep4Expanded_(v)
 
+  // Al montar: intentar restaurar progreso desde el backend
+  useEffect(() => {
+    if (!token || loadedRef.current) return
+    loadedRef.current = true
+    isRestoringRef.current = true
+    loadProgress().then(status => {
+      if (!status) {
+        isRestoringRef.current = false
+        return
+      }
+      const restored = progressDataToState(status.datos)
+      setIds(prev => ({ ...prev, ...restored.ids }))
+      if (restored.restaurant) setRestaurant(restored.restaurant)
+      if (restored.venues && restored.venues.length > 0) setVenues(restored.venues)
+      if (status.pasoActual > 1) setCurrentStep(status.pasoActual - 1)
+      isRestoringRef.current = false
+    })
+  }, [token, loadProgress])
+
+  // Al avanzar de paso o actualizar IDs: sincronizar con el backend
+  useEffect(() => {
+    if (!token || !loadedRef.current || isRestoringRef.current || currentStep === 0) return
+    saveProgress(currentStep + 1, ids, restaurant, venues)
+  }, [currentStep, ids, restaurant, venues, token, saveProgress])
 
   const updateTables = (scope: 'global' | number, updater: (t: Table[]) => Table[]) => {
     setTables_(s => patchTables(s, scope, updater(resolveTables(s, scope))))

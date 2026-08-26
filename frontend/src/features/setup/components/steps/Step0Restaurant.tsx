@@ -6,8 +6,26 @@ import { FieldLabel } from '@/shared/ui/FieldLabel'
 import { FadeUp } from '@/features/auth/components/animations/FadeUp'
 import { useSubmitStep0 } from '@/features/setup/hooks/useSubmitStep0'
 import { useValidateSlug, useValidateNombre } from '@/features/setup/hooks/useValidateRestaurantUnique'
+import { useNumericInput } from '@/features/setup/hooks/useNumericInput'
+import { slugify } from '@/features/setup/state/setupTypes'
+
+const TIPOS_COCINA = [
+  'Asiático',
+  'Parrilla',
+  'Bodegón',
+  'Italiano',
+  'Mexicano',
+  'Peruano',
+  'Pizza',
+  'Sushi',
+  'Hamburgesería',
+  'Vegetariano',
+  'Café / Brunch',
+  'Otro',
+]
 
 export function Step0Restaurant() {
+  const cuitInput = useNumericInput({ allowHyphen: true })
   const { restaurant, setRestaurantField, ids } = useSetupWizard()
   const { submit, isPending, error } = useSubmitStep0()
 
@@ -16,9 +34,11 @@ export function Step0Restaurant() {
 
   const slugTaken = slugCheck.data?.disponible === false
   const nombreTaken = nombreCheck.data?.disponible === false
+  const slugHasSpaces = restaurant.slug.includes(' ')
 
   const canContinue =
     restaurant.nombrePublico.trim().length > 0 &&
+    !slugHasSpaces &&
     !slugTaken &&
     !nombreTaken &&
     !isPending
@@ -59,9 +79,14 @@ export function Step0Restaurant() {
                 <XCircle size={12} /> No disponible
               </span>
             )}
-            {!slugCheck.isFetching && slugCheck.isSuccess && !slugTaken && restaurant.slug.length >= 3 && (
+            {!slugCheck.isFetching && slugCheck.isSuccess && !slugTaken && restaurant.slug.length >= 3 && !slugHasSpaces && (
               <span className="flex items-center gap-1 text-xs text-success font-medium">
                 <CheckCircle2 size={12} /> Disponible
+              </span>
+            )}
+            {slugHasSpaces && (
+              <span className="flex items-center gap-1 text-xs text-error font-medium">
+                <XCircle size={12} /> Sin espacios — usá guiones (-)
               </span>
             )}
           </div>
@@ -75,6 +100,7 @@ export function Step0Restaurant() {
               placeholder="la-parrilla-de-roberto"
               value={restaurant.slug}
               onChange={e => setRestaurantField('slug', e.target.value)}
+              onBlur={() => setRestaurantField('slug', slugify(restaurant.slug))}
               className="rounded-l-none"
             />
           </div>
@@ -97,10 +123,11 @@ export function Step0Restaurant() {
           <FieldLabel>CUIT</FieldLabel>
           <InputWithIcon
             icon={Hash}
-            type="text"
+            type="tel"
             placeholder="30-12345678-9"
             value={restaurant.cuit}
-            onChange={e => setRestaurantField('cuit', e.target.value)}
+            onKeyDown={cuitInput.onKeyDown}
+            onChange={e => setRestaurantField('cuit', cuitInput.sanitize(e.target.value))}
           />
         </div>
 
@@ -108,13 +135,22 @@ export function Step0Restaurant() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>Tipo de cocina</FieldLabel>
-            <InputWithIcon
-              icon={ChefHat}
-              type="text"
-              placeholder="Parrilla, Italiana..."
-              value={restaurant.tipoCocina}
-              onChange={e => setRestaurantField('tipoCocina', e.target.value)}
-            />
+            <div className="relative">
+              <ChefHat className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-outline pointer-events-none z-10" />
+              <select
+                value={restaurant.tipoCocina}
+                onChange={e => setRestaurantField('tipoCocina', e.target.value)}
+                className="w-full pl-10 pr-8 py-3 border border-outline-variant rounded-lg bg-white text-sm text-on-surface appearance-none cursor-pointer transition-all focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(7,169,169,0.14)]"
+              >
+                <option value="" disabled>Seleccionar...</option>
+                {TIPOS_COCINA.map(tipo => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+              <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
           <div>
             <FieldLabel>Ciudad</FieldLabel>

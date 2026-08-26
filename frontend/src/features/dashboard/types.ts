@@ -30,6 +30,7 @@ export interface RestauranteDashboard {
 
 export interface SucursalDashboard {
   id: number
+  restauranteId: number
   nombre: string
   slug: string
   direccion: string

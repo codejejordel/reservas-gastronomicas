@@ -11,17 +11,18 @@ import {
   X,
 } from 'lucide-react'
 import { useNavigate, useLocation } from '@tanstack/react-router'
+import { useCurrentUser } from '@/features/auth/store/authStore'
 
 const navGeneral = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Reservas', icon: CalendarDays, href: '#' },
+  { label: 'Reservas', icon: CalendarDays, href: '/dashboard/reservas' },
   { label: 'Mesas', icon: Users, href: '#' },
   { label: 'Mensajes', icon: MessageSquare, href: '#' },
 ]
 
 const navMore = [
   { label: 'Calendario', icon: ListTodo, href: '#' },
-  { label: 'Configuración', icon: Settings, href: '#' },
+  { label: 'Configuración', icon: Settings, href: '/dashboard/configuracion' },
 ]
 
 const team = [
@@ -38,6 +39,8 @@ interface SidebarProps {
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const user = useCurrentUser()
+  const canManageSettings = user?.rol === 'ADMIN_RESTAURANTE' || user?.rol === 'SUPER_ADMIN'
 
   const isActive = (href: string) => location.pathname === href
 
@@ -95,13 +98,13 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           Más
         </p>
         <nav className="flex flex-col gap-0.5">
-          {navMore.map((item) => (
+          {navMore.filter(item => item.label !== 'Configuración' || canManageSettings).map((item) => (
             <button
               key={item.label}
               onClick={() => { navigate({ to: item.href }); onClose?.() }}
               className={
                 `flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors ` +
-                (item.label === 'Configuración'
+                (isActive(item.href)
                   ? 'bg-primary/10 text-primary'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50')
               }

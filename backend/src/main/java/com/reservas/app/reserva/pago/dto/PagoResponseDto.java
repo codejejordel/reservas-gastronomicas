@@ -15,6 +15,7 @@ public class PagoResponseDto {
     private BigDecimal monto;
     private EstadoPago estado;
     private String mercadoPagoPaymentId;
+    private String mercadoPagoPreferenceId;
     private String linkPago;
     private LocalDateTime fechaPago;
     private LocalDateTime fechaExpiracion;

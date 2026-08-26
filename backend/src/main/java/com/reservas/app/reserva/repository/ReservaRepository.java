@@ -2,9 +2,12 @@ package com.reservas.app.reserva.repository;
 
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.entity.Reserva;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,6 +18,14 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long>,
                                            JpaSpecificationExecutor<Reserva> {
 
     Optional<Reserva> findByCodigoReserva(String codigoReserva);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Reserva r JOIN FETCH r.sucursal WHERE r.codigoReserva = :codigoReserva")
+    Optional<Reserva> findByCodigoReservaForUpdate(@Param("codigoReserva") String codigoReserva);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Reserva r JOIN FETCH r.sucursal WHERE r.id = :id")
+    Optional<Reserva> findByIdForUpdate(@Param("id") Long id);
 
     List<Reserva> findBySucursalIdAndFechaReserva(Long sucursalId, LocalDate fecha);
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion, AnimatePresence } from 'motion/react'
@@ -130,9 +131,9 @@ export function LoginForm({ onGoToRegister }: LoginFormProps) {
             />
             <span className="text-sm text-on-surface-variant">Recordarme</span>
           </label>
-          <button type="button" className="text-sm text-primary font-semibold hover:opacity-75 transition-opacity">
+          <Link to="/forgot-password" className="text-sm text-primary font-semibold hover:opacity-75 transition-opacity">
             ¿Olvidaste tu contraseña?
-          </button>
+          </Link>
         </FadeUp>
 
         <FadeUp delay={0.54}>

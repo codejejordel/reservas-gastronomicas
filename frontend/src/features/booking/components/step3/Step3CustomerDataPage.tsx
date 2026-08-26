@@ -12,19 +12,23 @@ export function Step3CustomerDataPage() {
     cliente.telefono.trim().length > 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 lg:space-y-6">
       <div>
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(1.3rem, 3vw, 1.75rem)', fontWeight: 700, color: 'var(--color-on-surface)', marginBottom: '0.4rem' }}>
-          Tus datos
+          <span className="lg:hidden">¿A nombre de quién reservamos?</span>
+          <span className="hidden lg:inline">Tus datos</span>
         </h2>
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-sm text-on-surface-variant lg:hidden">
+          Necesitamos estos datos para confirmar tu reserva.
+        </p>
+        <p className="hidden text-sm text-on-surface-variant lg:block">
           Completá tus datos para continuar con el pago.
         </p>
       </div>
 
       <LoginPromptBanner />
 
-      <div className="bg-white rounded-2xl border border-outline-variant p-5">
+      <div className="rounded-2xl bg-white px-0 py-1 lg:border lg:border-outline-variant lg:p-5">
         <CustomerDataForm />
       </div>
 
