@@ -29,6 +29,12 @@ public class MesaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mesaService.create(request));
     }
 
+    @PostMapping("/bulk")
+    @Operation(summary = "Crear varias mesas de una sucursal en una sola operación")
+    public ResponseEntity<List<MesaResponseDto>> createBulk(@RequestBody List<@Valid CreateMesaRequestDto> requests) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(mesaService.createBulk(requests));
+    }
+
     @GetMapping("/sucursal/{sucursalId}")
     @Operation(summary = "Listar mesas activas de una sucursal")
     public ResponseEntity<List<MesaResponseDto>> listBySucursal(@PathVariable Long sucursalId) {

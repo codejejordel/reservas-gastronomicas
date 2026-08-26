@@ -1,9 +1,11 @@
-import { Search, Bell, LogOut, Menu } from 'lucide-react'
+import { Search, LogOut, Menu } from 'lucide-react'
 import { useCurrentUser, useAuthStore } from '@/features/auth/store/authStore'
 import { useNavigate } from '@tanstack/react-router'
 import { ThemeToggle } from '@/shared/theme/ThemeToggle'
 import { SucursalSelector } from './SucursalSelector'
 import type { SucursalDashboard } from '../types'
+import { useSucursalSeleccionadaStore } from '../state/sucursalSeleccionadaStore'
+import { ReservationNotifications } from './ReservationNotifications'
 
 interface DashboardHeaderProps {
   sucursales?: SucursalDashboard[]
@@ -15,6 +17,8 @@ export function DashboardHeader({ sucursales, isLoadingSucursales, onMenuClick }
   const user = useCurrentUser()
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
+  const sucursalId = useSucursalSeleccionadaStore((state) => state.sucursalId)
+  const selectedBranch = sucursales?.find((branch) => branch.id === sucursalId)
 
   const handleLogout = () => {
     logout()
@@ -56,10 +60,11 @@ export function DashboardHeader({ sucursales, isLoadingSucursales, onMenuClick }
           <SucursalSelector sucursales={sucursales} isLoading={isLoadingSucursales} />
         </div>
 
-        <button className="relative w-9 h-9 rounded-xl bg-surface-container-high border border-outline-variant flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors shrink-0">
-          <Bell size={16} />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error" />
-        </button>
+        <ReservationNotifications
+          key={selectedBranch ? `${selectedBranch.restauranteId}:${selectedBranch.id}` : 'no-branch'}
+          restauranteId={selectedBranch?.restauranteId}
+          sucursalId={selectedBranch?.id}
+        />
 
         <ThemeToggle />
 

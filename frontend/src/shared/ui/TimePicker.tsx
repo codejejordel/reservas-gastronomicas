@@ -24,7 +24,7 @@ export function TimePicker({ value, onChange, hasError }: TimePickerProps) {
 
   const triggerClass = [
     'h-8 w-14 gap-0 px-1.5 text-sm font-medium border rounded-lg',
-    'bg-white focus:ring-2 focus:ring-primary/20',
+    'bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary/20',
     'focus:border-primary transition-all',
     hasError ? 'border-error' : 'border-outline-variant',
   ].join(' ')
@@ -35,7 +35,7 @@ export function TimePicker({ value, onChange, hasError }: TimePickerProps) {
         <SelectTrigger className={triggerClass}>
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="max-h-48 overflow-y-auto bg-white border border-outline-variant shadow-lg">
+        <SelectContent className="z-[110] max-h-48 overflow-y-auto bg-surface-container-lowest text-on-surface border border-outline-variant shadow-lg">
           {HOURS.map(h => (
             <SelectItem key={h} value={h}>{h}</SelectItem>
           ))}
@@ -48,7 +48,7 @@ export function TimePicker({ value, onChange, hasError }: TimePickerProps) {
         <SelectTrigger className={triggerClass}>
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="max-h-48 overflow-y-auto bg-white border border-outline-variant shadow-lg">
+        <SelectContent className="z-[110] max-h-48 overflow-y-auto bg-surface-container-lowest text-on-surface border border-outline-variant shadow-lg">
           {minutes.map((m: string) => (
             <SelectItem key={m} value={m}>{m}</SelectItem>
           ))}

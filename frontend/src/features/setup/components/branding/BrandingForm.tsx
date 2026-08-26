@@ -89,7 +89,7 @@ export function BrandingForm({ brand, onChange }: BrandingFormProps) {
           { field: 'facebook' as const, icon: <span className="text-xs font-bold">FB</span>, placeholder: 'facebook.com/tu-local' },
           { field: 'website' as const, icon: <Globe size={14} />, placeholder: 'www.tu-restaurante.com' },
         ].map(({ field, icon, placeholder }) => (
-          <div key={field} className="flex items-center border border-outline-variant rounded-lg overflow-hidden bg-white focus-within:border-primary focus-within:shadow-[0_0_0_2px_rgba(7,169,169,0.15)] transition-all">
+          <div key={field} className="flex items-center border border-outline-variant rounded-lg overflow-hidden bg-surface-container-lowest focus-within:border-primary focus-within:shadow-[0_0_0_2px_rgba(7,169,169,0.15)] transition-all">
             <span className="px-3 py-2 text-on-surface-variant bg-surface-container border-r border-outline-variant shrink-0">{icon}</span>
             <input
               type="url"

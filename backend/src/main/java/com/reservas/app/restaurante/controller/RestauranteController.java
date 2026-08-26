@@ -4,15 +4,18 @@ import com.reservas.app.restaurante.dto.CreateRestauranteRequestDto;
 import com.reservas.app.restaurante.dto.DisponibilidadResponseDto;
 import com.reservas.app.restaurante.dto.RestauranteResponseDto;
 import com.reservas.app.restaurante.dto.UpdateRestauranteRequestDto;
+import com.reservas.app.restaurante.entity.TipoImagenRestaurante;
 import com.reservas.app.restaurante.service.RestauranteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -53,6 +56,25 @@ public class RestauranteController {
     public ResponseEntity<RestauranteResponseDto> update(@PathVariable Long id,
                                                          @Valid @RequestBody UpdateRestauranteRequestDto request) {
         return ResponseEntity.ok(restauranteService.update(id, request));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN_RESTAURANTE','SUPER_ADMIN')")
+    @PostMapping(value = "/{id}/imagen", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Subir logo o banner del restaurante")
+    public ResponseEntity<RestauranteResponseDto> subirImagen(
+            @PathVariable Long id,
+            @RequestParam TipoImagenRestaurante tipo,
+            @RequestPart("archivo") MultipartFile archivo) {
+        return ResponseEntity.ok(restauranteService.subirImagen(id, tipo, archivo));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN_RESTAURANTE','SUPER_ADMIN')")
+    @DeleteMapping("/{id}/imagen")
+    @Operation(summary = "Eliminar logo o banner del restaurante")
+    public ResponseEntity<RestauranteResponseDto> eliminarImagen(
+            @PathVariable Long id,
+            @RequestParam TipoImagenRestaurante tipo) {
+        return ResponseEntity.ok(restauranteService.eliminarImagen(id, tipo));
     }
 
     @GetMapping("/validar/nombre")

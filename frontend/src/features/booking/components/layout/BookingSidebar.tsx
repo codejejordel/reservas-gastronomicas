@@ -1,7 +1,7 @@
 import { Users, Calendar, Clock, Info, Lock, Lightbulb } from 'lucide-react'
 import { useBooking } from '../../state/BookingContext'
 import { BookingSummaryRow } from '../shared/BookingSummaryRow'
-import { formatARS, calcularTotal } from '../../utils/pricing'
+import { formatARS } from '../../utils/pricing'
 
 interface BookingSidebarProps {
   onFinalizar?: () => void
@@ -10,9 +10,8 @@ interface BookingSidebarProps {
 }
 
 export function BookingSidebar({ onFinalizar, canFinalizar = false, submitting = false }: BookingSidebarProps) {
-  const { restaurante, sucursal, partySize, fecha, hora, currentStep } = useBooking()
+  const { restaurante, sucursal, partySize, fecha, hora, currentStep, cotizacion, cotizacionLoading } = useBooking()
   const isStep4 = currentStep === 4
-  const total = calcularTotal(partySize)
 
   const formatFecha = (f: string | null) => {
     if (!f) return null
@@ -82,14 +81,20 @@ export function BookingSidebar({ onFinalizar, canFinalizar = false, submitting =
       </div>
 
       {/* Alerta de tolerancia */}
-      <div className="px-5 pb-5">
-        <div className="flex items-start gap-2 bg-primary-container rounded-lg px-3 py-2.5">
-          <Info size={14} className="text-primary shrink-0 mt-0.5" />
-          <p className="text-[0.7rem] text-on-primary-container leading-relaxed">
-            Las reservas tienen una tolerancia de 15 minutos. Pasado ese tiempo, la mesa podría ser liberada.
-          </p>
+      {(cotizacion || cotizacionLoading) && (
+        <div className="px-5 pb-5">
+          <div className="flex items-start gap-2 rounded-lg px-3 py-2.5 shadow-sm">
+            <Info size={14} className="text-primary shrink-0 mt-0.5" />
+            {cotizacion ? (
+              <p className="text-[0.7rem] text-on-primary-container leading-relaxed">
+                Las reservas tienen una tolerancia de {cotizacion.toleranciaMinutos} minutos. Pasado ese tiempo, la mesa podría ser liberada.
+              </p>
+            ) : (
+              <div className="h-8 w-full rounded-lg bg-surface-container animate-pulse" />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Step 4: Botón finalizar + tip */}
       {isStep4 && (
@@ -120,18 +125,26 @@ export function BookingSidebar({ onFinalizar, canFinalizar = false, submitting =
             <p className="text-center text-[0.65rem] text-on-surface-variant mt-2">
               Pago seguro procesado por Turnify Pay
             </p>
-            <p className="text-center text-xs font-bold text-primary mt-1">{formatARS(total)}</p>
+            {cotizacion ? (
+              <p className="text-center text-xs font-bold text-primary mt-1">
+                {formatARS(cotizacion.totalAPagarAhora)}
+              </p>
+            ) : (
+              <div className="mx-auto mt-2 h-4 w-20 rounded bg-surface-container animate-pulse" />
+            )}
           </div>
 
-          <div className="mx-5 mb-5 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-2.5">
-            <Lightbulb size={16} className="text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-bold text-amber-800 mb-0.5">Recomendación del Chef</p>
-              <p className="text-xs text-amber-700 leading-relaxed">
-                Llegá 10 minutos antes de tu horario. La tolerancia máxima de espera es de 15 minutos.
-              </p>
+          {cotizacion && (
+            <div className="mx-5 mb-5 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-2.5">
+              <Lightbulb size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-amber-800 mb-0.5">Recomendación del Chef</p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  Llegá 10 minutos antes de tu horario. La tolerancia máxima de espera es de {cotizacion.toleranciaMinutos} minutos.
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

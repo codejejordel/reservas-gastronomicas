@@ -179,12 +179,13 @@ export function DualMonthCalendar({ sucursalId, partySize, selectedDate, onSelec
       </div>
 
       {/* Mobile: 1 mes con flechas */}
-      <div className="lg:hidden bg-white rounded-2xl border border-outline-variant p-5">
+      <div className="-mx-4 w-[calc(100%+2rem)] border-y border-outline-variant bg-white px-0 py-4 sm:mx-0 sm:w-auto sm:rounded-2xl sm:border sm:p-5 lg:hidden">
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
             onClick={goToPrevMonth}
-            className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors"
+            aria-label="Mes anterior"
+            className="w-11 h-11 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <ChevronLeft size={18} />
           </button>
@@ -194,13 +195,14 @@ export function DualMonthCalendar({ sucursalId, partySize, selectedDate, onSelec
           <button
             type="button"
             onClick={goToNextMonth}
-            className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors"
+            aria-label="Mes siguiente"
+            className="w-11 h-11 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <ChevronRight size={18} />
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2">
           {DIAS_SEMANA.map(d => (
             <div key={d} className="text-center text-xs font-semibold text-on-surface-variant py-1">
               {d}
@@ -208,14 +210,14 @@ export function DualMonthCalendar({ sucursalId, partySize, selectedDate, onSelec
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {renderMonth(months[0].year, months[0].month)}
         </div>
       </div>
 
       {/* Indicador de actualización */}
       {isFetching && (
-        <div className="flex items-center justify-center gap-2 text-xs text-on-surface-variant">
+        <div className="flex items-center justify-center gap-2 text-xs text-on-surface-variant" role="status" aria-live="polite">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -232,7 +234,7 @@ export function DualMonthCalendar({ sucursalId, partySize, selectedDate, onSelec
       )}
 
       {/* Leyenda */}
-      <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm lg:text-xs">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-primary" />
           <span className="text-on-surface-variant">Disponible</span>

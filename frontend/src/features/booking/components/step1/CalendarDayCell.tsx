@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import type { DayAvailabilityStatus } from '../../types/bookingTypes'
 
 interface CalendarDayCellProps {
@@ -10,8 +10,14 @@ interface CalendarDayCellProps {
   onClick: () => void
 }
 
-export function CalendarDayCell({ day, status, isSelected, isToday, onClick }: CalendarDayCellProps) {
+export function CalendarDayCell({ day, date, status, isSelected, isToday, onClick }: CalendarDayCellProps) {
   const isDisabled = status === 'past' || status === 'full' || status === 'closed'
+  const reduceMotion = useReducedMotion()
+  const accessibleDate = new Intl.DateTimeFormat('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date(`${date}T00:00:00`))
 
   const getStatusColor = () => {
     if (isSelected) return 'bg-primary text-on-primary'
@@ -35,12 +41,15 @@ export function CalendarDayCell({ day, status, isSelected, isToday, onClick }: C
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      whileHover={!isDisabled ? { scale: 1.05 } : {}}
-      whileTap={!isDisabled ? { scale: 0.95 } : {}}
+      aria-label={`${accessibleDate}${status === 'few-left' ? ', últimas mesas' : ''}${isDisabled ? ', no disponible' : ''}`}
+      aria-pressed={isSelected}
+      aria-current={isToday ? 'date' : undefined}
+      whileHover={!reduceMotion && !isDisabled ? { scale: 1.05 } : {}}
+      whileTap={!reduceMotion && !isDisabled ? { scale: 0.95 } : {}}
       className={`
-        relative w-full aspect-square rounded-lg text-sm font-semibold
+        relative min-h-11 min-w-11 w-full lg:aspect-square lg:min-h-0 lg:min-w-0 rounded-lg text-sm font-semibold
         flex flex-col items-center justify-center
-        transition-all disabled:cursor-not-allowed
+        transition-all motion-reduce:transition-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset
         ${getStatusColor()}
         ${isToday && !isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}
       `}

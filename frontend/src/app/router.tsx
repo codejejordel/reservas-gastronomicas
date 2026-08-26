@@ -7,11 +7,19 @@ import {
   Outlet,
 } from '@tanstack/react-router'
 import { AuthLayout } from '@/features/auth/AuthLayout'
+import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { DashboardPage } from '@/features/reservations/DashboardPage'
+import { ReservationsPage } from '@/features/reservations/ReservationsPage'
 import { SetupWizardLayout } from '@/features/setup/components/SetupWizardLayout'
 import { BookingWizard } from '@/features/booking/BookingWizard'
 import { BookingSuccessWrapper } from '@/features/booking/BookingSuccessWrapper'
+import {
+  PaymentFailedReturn,
+  PaymentPendingReturn,
+  PaymentSuccessfulReturn,
+} from '@/features/booking/components/payment/PaymentReturnPage'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { SettingsPage } from '@/features/settings/SettingsPage'
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -33,6 +41,12 @@ const registerRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/register',
   component: () => null,
+})
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/forgot-password',
+  component: ForgotPasswordPage,
 })
 
 const indexRoute = createRoute({
@@ -57,6 +71,25 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 })
 
+const requireSettingsRole = () => {
+  const role = useAuthStore.getState().user?.rol
+  if (role !== 'ADMIN_RESTAURANTE' && role !== 'SUPER_ADMIN') throw redirect({ to: '/dashboard' })
+}
+
+const reservationsRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/reservas', component: ReservationsPage })
+const settingsRestaurantRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/restaurante', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="restaurante" /> })
+const settingsBranchesRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/locales', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="locales" /> })
+const settingsSchedulesRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/horarios', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="horarios" /> })
+const settingsTablesRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/mesas', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="mesas" /> })
+const settingsRulesRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/reglas', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="reglas" /> })
+const settingsBrandRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/marca', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="marca" /> })
+
+const settingsIndexRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/dashboard/configuracion',
+  beforeLoad: () => { throw redirect({ to: '/dashboard/configuracion/restaurante' }) },
+})
+
 const setupRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/setup',
@@ -75,12 +108,34 @@ const bookingSuccessRoute = createRoute({
   component: BookingSuccessWrapper,
 })
 
+const paymentSuccessfulRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reserva/$codigo/pago-exitoso',
+  component: PaymentSuccessfulReturn,
+})
+
+const paymentPendingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reserva/$codigo/pago-pendiente',
+  component: PaymentPendingReturn,
+})
+
+const paymentFailedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reserva/$codigo/pago-fallido',
+  component: PaymentFailedReturn,
+})
+
 const routeTree = rootRoute.addChildren([
   authRoute.addChildren([loginRoute, registerRoute]),
   indexRoute,
-  protectedRoute.addChildren([dashboardRoute, setupRoute]),
+  forgotPasswordRoute,
+  protectedRoute.addChildren([dashboardRoute, reservationsRoute, settingsIndexRoute, settingsRestaurantRoute, settingsBranchesRoute, settingsSchedulesRoute, settingsTablesRoute, settingsRulesRoute, settingsBrandRoute, setupRoute]),
   bookingRoute,
   bookingSuccessRoute,
+  paymentSuccessfulRoute,
+  paymentPendingRoute,
+  paymentFailedRoute,
 ])
 
 const router = createRouter({ routeTree })

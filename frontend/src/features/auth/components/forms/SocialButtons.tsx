@@ -1,27 +1,101 @@
+import { useEffect, useRef, useState } from 'react'
+import { Loader2 } from 'lucide-react'
+import { useGoogleLogin } from '@/features/auth/hooks/useGoogleLogin'
+import { Alert } from '@/shared/ui/Alert'
+
+const GOOGLE_SCRIPT_URL = 'https://accounts.google.com/gsi/client'
+
 export function SocialButtons() {
+  const buttonRef = useRef<HTMLDivElement>(null)
+  const [scriptState, setScriptState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [setupError, setSetupError] = useState<string | null>(null)
+  const { mutate, isPending, isError, error } = useGoogleLogin()
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    const buttonElement = buttonRef.current
+    if (!clientId) {
+      setSetupError('El acceso con Google no está configurado.')
+      setScriptState('error')
+      return
+    }
+
+    let active = true
+    let script = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_SCRIPT_URL}"]`)
+
+    const initializeGoogle = () => {
+      if (!active) return
+      if (!window.google || !buttonElement) {
+        setSetupError('No se pudo cargar el acceso con Google.')
+        setScriptState('error')
+        return
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => {
+          if (!active) return
+          if (!response.credential) {
+            setSetupError('Google no devolvió una credencial válida.')
+            return
+          }
+          setSetupError(null)
+          mutate(response.credential)
+        },
+      })
+      buttonElement.replaceChildren()
+      window.google.accounts.id.renderButton(buttonElement, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        width: 360,
+      })
+      setScriptState('ready')
+    }
+
+    const handleScriptError = () => {
+      if (!active) return
+      setSetupError('No se pudo cargar el acceso con Google.')
+      setScriptState('error')
+    }
+
+    if (window.google) {
+      initializeGoogle()
+    } else if (script) {
+      script.addEventListener('load', initializeGoogle)
+      script.addEventListener('error', handleScriptError)
+    } else {
+      script = document.createElement('script')
+      script.src = GOOGLE_SCRIPT_URL
+      script.async = true
+      script.defer = true
+      script.addEventListener('load', initializeGoogle)
+      script.addEventListener('error', handleScriptError)
+      document.head.appendChild(script)
+    }
+
+    return () => {
+      active = false
+      script?.removeEventListener('load', initializeGoogle)
+      script?.removeEventListener('error', handleScriptError)
+      buttonElement?.replaceChildren()
+      window.google?.accounts.id.cancel()
+    }
+  }, [mutate])
+
   return (
-    <div className="grid grid-cols-2 gap-3 mb-6">
-      <button
-        type="button"
-        className="flex items-center justify-center gap-2 px-3 py-3 border border-outline-variant rounded-lg bg-white text-sm text-on-surface font-medium hover:border-primary hover:bg-surface-container-low transition-colors"
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-        </svg>
-        Google
-      </button>
-      <button
-        type="button"
-        className="flex items-center justify-center gap-2 px-3 py-3 border border-outline-variant rounded-lg bg-white text-sm text-on-surface font-medium hover:border-primary hover:bg-surface-container-low transition-colors"
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.635 5.903-5.635zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-        </svg>
-        Twitter / X
-      </button>
+    <div className="mb-6 space-y-3">
+      <div className="flex min-h-10 items-center justify-center" aria-busy={scriptState === 'loading' || isPending}>
+        {(scriptState === 'loading' || isPending) && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+        <div ref={buttonRef} className={scriptState !== 'ready' || isPending ? 'hidden' : ''} />
+      </div>
+      {(setupError || isError) && (
+        <Alert variant="error">
+          {setupError ?? (error instanceof Error ? error.message : 'No se pudo iniciar sesión con Google')}
+        </Alert>
+      )}
     </div>
   )
 }

@@ -35,18 +35,20 @@ public class HorarioService {
         }
 
         int ordenTurno = request.getOrdenTurno() != null ? request.getOrdenTurno() : 1;
-        if (horarioRepository.existsBySucursalIdAndDiaSemanaAndOrdenTurno(sucursalId, request.getDiaSemana(), ordenTurno)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Ya existe un turno " + ordenTurno + " para " + request.getDiaSemana() + " en esta sucursal");
-        }
+        Horario horario = horarioRepository
+                .findBySucursalIdAndDiaSemanaAndOrdenTurno(sucursalId, request.getDiaSemana(), ordenTurno)
+                .orElseGet(() -> {
+                    Horario nuevo = new Horario();
+                    nuevo.setSucursal(sucursal);
+                    nuevo.setDiaSemana(request.getDiaSemana());
+                    nuevo.setOrdenTurno(ordenTurno);
+                    return nuevo;
+                });
 
-        Horario horario = new Horario();
-        horario.setSucursal(sucursal);
-        horario.setDiaSemana(request.getDiaSemana());
-        horario.setOrdenTurno(ordenTurno);
         horario.setEtiqueta(request.getEtiqueta());
         horario.setHoraApertura(request.getHoraApertura());
         horario.setHoraCierre(request.getHoraCierre());
+        horario.setActivo(true);
 
         return toDto(horarioRepository.save(horario));
     }

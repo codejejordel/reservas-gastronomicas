@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 
 interface ButtonStepersProps {
   onNext?: () => void
@@ -23,14 +23,16 @@ export function ButtonStepers({
   showNext = true,
   loading = false,
 }: ButtonStepersProps) {
+  const reduceMotion = useReducedMotion()
+
   return (
-    <div className="flex justify-end gap-3 mt-6">
+    <div className="fixed inset-x-0 bottom-0 z-30 mt-6 flex gap-2 border-t border-outline-variant bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(23,29,29,0.08)] lg:static lg:justify-end lg:gap-3 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:shadow-none">
       {showBack && (
         <button
           type="button"
           onClick={onBack}
           disabled={backDisabled || loading}
-          className="flex-1 lg:flex-none lg:w-24 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-h-11 flex-1 lg:flex-none lg:w-24 py-3 border border-outline-variant text-on-surface rounded-lg text-sm font-semibold hover:bg-surface-container transition-all motion-reduce:transition-none active:scale-[0.98] motion-reduce:active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           {backLabel}
         </button>
@@ -41,9 +43,9 @@ export function ButtonStepers({
           type="button"
           onClick={onNext}
           disabled={nextDisabled || loading}
-          whileHover={!nextDisabled && !loading ? { opacity: 0.9, y: -1 } : {}}
-          whileTap={!nextDisabled && !loading ? { scale: 0.98 } : {}}
-          className={`${showBack ? 'lg:w-48 lg:flex-none flex-2' : 'w-full lg:w-48'} py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed`}
+          whileHover={!reduceMotion && !nextDisabled && !loading ? { opacity: 0.9, y: -1 } : {}}
+          whileTap={!reduceMotion && !nextDisabled && !loading ? { scale: 0.98 } : {}}
+          className={`${showBack ? 'lg:w-48 lg:flex-none flex-[2]' : 'w-full lg:w-48'} min-h-11 py-3 bg-primary text-on-primary rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-px motion-reduce:hover:translate-y-0 hover:shadow-lg transition-all motion-reduce:transition-none active:scale-[0.98] motion-reduce:active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
         >
           {loading ? (
             <>

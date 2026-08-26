@@ -43,7 +43,7 @@ export function ColorPicker({ label, value, onChange }: ColorPickerProps) {
             className="w-7 h-7 rounded-full cursor-pointer border border-outline-variant bg-transparent p-0"
           />
           <span
-            className="text-xs font-mono text-on-surface border border-outline-variant rounded-md px-2 py-0.5 bg-white"
+            className="text-xs font-mono text-on-surface border border-outline-variant rounded-md px-2 py-0.5 bg-surface-container-lowest"
           >
             {value}
           </span>

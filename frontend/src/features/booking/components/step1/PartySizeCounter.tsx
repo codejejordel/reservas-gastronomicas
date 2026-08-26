@@ -1,5 +1,5 @@
 import { Minus, Plus } from 'lucide-react'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 
 interface PartySizeCounterProps {
   value: number
@@ -11,21 +11,23 @@ interface PartySizeCounterProps {
 export function PartySizeCounter({ value, onChange, min = 1, max = 20 }: PartySizeCounterProps) {
   const canDecrease = value > min
   const canIncrease = value < max
+  const reduceMotion = useReducedMotion()
 
   return (
-    <div className="bg-white border-2 border-primary rounded-full px-6 py-3 inline-flex items-center gap-4">
+    <div className="inline-flex max-w-full items-center gap-3 rounded-full border-2 border-primary bg-white px-3 py-2 lg:gap-4 lg:px-6 lg:py-3">
       <motion.button
         type="button"
         onClick={() => canDecrease && onChange(value - 1)}
         disabled={!canDecrease}
-        whileHover={canDecrease ? { scale: 1.1 } : {}}
-        whileTap={canDecrease ? { scale: 0.95 } : {}}
-        className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+        whileHover={!reduceMotion && canDecrease ? { scale: 1.1 } : {}}
+        whileTap={!reduceMotion && canDecrease ? { scale: 0.95 } : {}}
+        aria-label="Quitar una persona"
+        className="w-11 h-11 lg:w-8 lg:h-8 rounded-full bg-primary text-on-primary flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-opacity motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
         <Minus size={16} />
       </motion.button>
 
-      <div className="min-w-[120px] text-center">
+      <div className="min-w-[92px] text-center lg:min-w-[120px]" aria-live="polite">
         <div className="text-2xl font-bold text-on-surface tabular-nums">
           {value}
         </div>
@@ -38,9 +40,10 @@ export function PartySizeCounter({ value, onChange, min = 1, max = 20 }: PartySi
         type="button"
         onClick={() => canIncrease && onChange(value + 1)}
         disabled={!canIncrease}
-        whileHover={canIncrease ? { scale: 1.1 } : {}}
-        whileTap={canIncrease ? { scale: 0.95 } : {}}
-        className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+        whileHover={!reduceMotion && canIncrease ? { scale: 1.1 } : {}}
+        whileTap={!reduceMotion && canIncrease ? { scale: 0.95 } : {}}
+        aria-label="Agregar una persona"
+        className="w-11 h-11 lg:w-8 lg:h-8 rounded-full bg-primary text-on-primary flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-opacity motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
         <Plus size={16} />
       </motion.button>

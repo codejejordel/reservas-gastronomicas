@@ -13,9 +13,9 @@ spring:
 #      connection-timeout: 30000
 
   datasource:
-    url: ${DB_HOST}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${DB_HOST:jdbc:postgresql://localhost:5432/reservas}
+    username: ${DB_USER:reservas_user}
+    password: ${DB_PASSWORD:reservas_pass_dev}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -57,17 +57,23 @@ server:
     include-binding-errors: always
 
 app:
+  reserva:
+    cargo-servicio-unitario: ${TURNIFY_CARGO_SERVICIO_UNITARIO:500}
   upload:
     dir: ${UPLOAD_DIR:./uploads}
   cors:
     allowed-origins: http://localhost:3000,http://localhost:5173
   jwt:
     secret: ${JWT_SECRET:cambiar-esto-en-produccion-debe-ser-largo-y-aleatorio-minimo-256-bits}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    expiration-ms: ${JWT_EXPIRATION_MS:900000}
+  auth:
+    password-reset:
+      expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:10}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
   mercadopago:
     access-token: ${MP_ACCESS_TOKEN:}
+    collector-id: ${MP_COLLECTOR_ID:}
     webhook-secret: ${MP_WEBHOOK_SECRET:}
     webhook-base-url: ${MP_WEBHOOK_BASE_URL:http://localhost:8080/api}
   frontend:

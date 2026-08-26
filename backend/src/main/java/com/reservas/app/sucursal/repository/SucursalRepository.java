@@ -15,4 +15,6 @@ public interface SucursalRepository extends JpaRepository<Sucursal, Long> {
     Optional<Sucursal> findByRestauranteIdAndEsPrincipalTrue(Long restauranteId);
 
     long countByRestauranteId(Long restauranteId);
+
+    boolean existsByIdAndRestauranteId(Long id, Long restauranteId);
 }

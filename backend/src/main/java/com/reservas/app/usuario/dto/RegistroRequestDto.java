@@ -1,9 +1,7 @@
 package com.reservas.app.usuario.dto;
 
-import com.reservas.app.usuario.entity.RolUsuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,7 +27,4 @@ public class RegistroRequestDto {
 
     @Size(max = 20)
     private String dni;
-
-    @NotNull
-    private RolUsuario rol;
 }

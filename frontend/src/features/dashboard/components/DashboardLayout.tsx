@@ -12,6 +12,7 @@ import { MetricCard } from './MetricCard'
 import { ReservasCard } from './ReservasCard'
 import { CalendarCard } from './CalendarCard'
 import { HeatmapCard } from './HeatmapCard'
+import { NewVenueDialog } from '@/features/settings/components/NewVenueDialog'
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -163,6 +164,7 @@ export function DashboardLayout() {
             </div>
           </div>
         </main>
+        <NewVenueDialog />
       </div>
     </ThemeProvider>
   )

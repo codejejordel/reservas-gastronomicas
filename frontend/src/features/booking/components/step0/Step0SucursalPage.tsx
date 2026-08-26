@@ -40,9 +40,12 @@ export function Step0SucursalPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-on-surface mb-2">Seleccioná una sucursal</h2>
+    <div className="space-y-5 lg:space-y-6">
+      <div className="text-left lg:text-center">
+        <h2 className="text-xl font-semibold text-on-surface mb-2">
+          <span className="lg:hidden">Elegí una sucursal</span>
+          <span className="hidden lg:inline">Seleccioná una sucursal</span>
+        </h2>
         <p className="text-sm text-on-surface-variant">
           {restaurante?.nombrePublico} tiene {sucursales.length} sucursal{sucursales.length > 1 ? 'es' : ''}
         </p>
@@ -54,7 +57,7 @@ export function Step0SucursalPage() {
             key={s.id}
             onClick={() => handleSelectSucursal(s)}
             className={`
-              relative flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left
+              relative min-h-11 w-full flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
               ${sucursal?.id === s.id
                 ? 'border-primary bg-primary/5'
                 : 'border-outline-variant hover:border-primary/50 hover:bg-surface-container'
@@ -69,15 +72,15 @@ export function Step0SucursalPage() {
 
             <h3 className="font-medium text-on-surface text-lg pr-8">{s.nombre}</h3>
 
-            <div className="mt-3 space-y-1.5 text-sm">
-              <div className="flex items-center gap-2 text-on-surface-variant">
-                <MapPin size={14} />
-                <span>{s.direccion}{s.ciudad ? `, ${s.ciudad}` : ''}</span>
+              <div className="mt-3 min-w-0 space-y-1.5 text-sm">
+                <div className="flex items-center gap-2 text-on-surface-variant">
+                  <MapPin size={14} className="shrink-0" />
+                  <span className="break-words">{s.direccion}{s.ciudad ? `, ${s.ciudad}` : ''}</span>
               </div>
 
               {s.telefono && (
                 <div className="flex items-center gap-2 text-on-surface-variant">
-                  <Phone size={14} />
+                  <Phone size={14} className="shrink-0" />
                   <span>{s.telefono}</span>
                 </div>
               )}

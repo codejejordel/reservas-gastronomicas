@@ -96,6 +96,7 @@ export function DayScheduleRow({ day, schedule, rangeErrors, onToggle, onTimeCha
           <Switch
             checked={schedule.enabled}
             onCheckedChange={onToggle}
+            aria-label={`${schedule.enabled ? 'Cerrar' : 'Abrir'} ${DAY_LABELS[day]}`}
             className="shrink-0"
           />
           <span className={`text-sm font-semibold transition-colors ${schedule.enabled ? 'text-on-surface' : 'text-on-surface-variant'}`}>
@@ -171,16 +172,25 @@ export function DayScheduleRow({ day, schedule, rangeErrors, onToggle, onTimeCha
                 )}
               </motion.div>
             ) : (
-              <motion.span
+              <motion.div
                 key="closed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: -2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -2 }}
                 transition={{ duration: 0.15 }}
-                className="inline-flex text-xs font-medium text-on-surface-variant bg-surface-container px-2.5 py-0.5 rounded-full self-start mt-1"
+                className="flex items-center gap-2 self-start"
               >
-                Cerrado
-              </motion.span>
+                <span className="inline-flex rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-medium text-on-surface-variant">
+                  Cerrado
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onToggle(true)}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <Plus size={13} strokeWidth={2.5} aria-hidden="true" /> Agregar horario
+                </button>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

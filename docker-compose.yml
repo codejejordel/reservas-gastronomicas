@@ -44,30 +44,52 @@ services:
     container_name: reservas-backend
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
-      SPRING_DATASOURCE_USERNAME: postgres.akzpawuhiqavbubdvoeb
-      SPRING_DATASOURCE_PASSWORD: ${SUPABASE_DB_PASSWORD:-nZwJy3JRLbIeLPcx}
-      SPRING_FLYWAY_URL: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require
-      SPRING_FLYWAY_USER: postgres.akzpawuhiqavbubdvoeb
-      SPRING_FLYWAY_PASSWORD: ${SUPABASE_DB_PASSWORD:-nZwJy3JRLbIeLPcx}
+      DB_HOST: ${DB_HOST:-jdbc:postgresql://postgres:5432/reservas}
+      DB_USER: ${DB_USER:-reservas_user}
+      DB_PASSWORD: ${DB_PASSWORD:-reservas_pass_dev}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_COLLECTOR_ID: ${MP_COLLECTOR_ID:-}
+      MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:-}
+      MP_WEBHOOK_BASE_URL: ${MP_WEBHOOK_BASE_URL:-http://localhost:8080/api}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     networks:
       - reservas-net
 
-  # descomentar cuando se inicialice React
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: "on-failure:3"
+    command: tunnel --no-autoupdate --url http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - reservas-net
+
   frontend:
-     build:
-       context: ./frontend
-       dockerfile: Dockerfile
-     container_name: reservas-frontend
-     restart: unless-stopped
-     ports:
-       - "${FRONTEND_PORT:-3000}:80"
-     depends_on:
-       - backend
-     networks:
-       - reservas-net
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    container_name: reservas-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - reservas-net
+
+  cloudflared-frontend:
+    image: cloudflare/cloudflared:latest
+    restart: "on-failure:3"
+    command: tunnel --no-autoupdate --url http://frontend:80
+    depends_on:
+      - frontend
+    networks:
+      - reservas-net
 
 volumes:
   postgres-data:
