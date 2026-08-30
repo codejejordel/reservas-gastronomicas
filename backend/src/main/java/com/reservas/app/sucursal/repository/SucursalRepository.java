@@ -10,6 +10,8 @@ public interface SucursalRepository extends JpaRepository<Sucursal, Long> {
 
     List<Sucursal> findByRestauranteIdAndActivaTrue(Long restauranteId);
 
+    List<Sucursal> findByRestauranteId(Long restauranteId);
+
     boolean existsByRestauranteIdAndSlug(Long restauranteId, String slug);
 
     Optional<Sucursal> findByRestauranteIdAndEsPrincipalTrue(Long restauranteId);
