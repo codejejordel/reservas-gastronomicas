@@ -69,11 +69,16 @@ public class SucursalService {
         return toDto(findOrThrow(id));
     }
 
+    public List<SucursalResponseDto> listAll() {
+        return sucursalRepository.findAll().
+                stream().map(this::toDto).toList();
+    }
+
     public List<SucursalResponseDto> listByRestaurante(Long restauranteId) {
         if (!restauranteRepository.existsById(restauranteId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurante no encontrado");
         }
-        return sucursalRepository.findByRestauranteIdAndActivaTrue(restauranteId)
+        return sucursalRepository.findByRestauranteId(restauranteId)
                 .stream().map(this::toDto).toList();
     }
 

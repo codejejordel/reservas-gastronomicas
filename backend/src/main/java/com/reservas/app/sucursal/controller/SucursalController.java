@@ -8,11 +8,14 @@ import com.reservas.app.sucursal.service.DisponibilidadService;
 import com.reservas.app.sucursal.service.SucursalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -33,8 +36,14 @@ public class SucursalController {
         return ResponseEntity.status(HttpStatus.CREATED).body(sucursalService.create(request));
     }
 
+    @GetMapping("/restaurante/all")
+    @Operation(summary = "Listar TODAS las sucursales. Sin restrinccion de perfiles ni roles. Sirve para pantalla Super admin pero tambien pensado para cuando agreguemos un 'buscador' de sucursales")
+    public ResponseEntity<List<SucursalResponseDto>> listAll(HttpServletRequest request) {
+        return ResponseEntity.ok(sucursalService.listAll());
+    }
+
     @GetMapping("/restaurante/{restauranteId}")
-    @Operation(summary = "Listar sucursales activas de un restaurante")
+    @Operation(summary = "Listar sucursales de un restaurante")
     public ResponseEntity<List<SucursalResponseDto>> listByRestaurante(@PathVariable Long restauranteId) {
         return ResponseEntity.ok(sucursalService.listByRestaurante(restauranteId));
     }
