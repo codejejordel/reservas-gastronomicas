@@ -10,7 +10,6 @@ import com.reservas.app.reserva.dto.CreateReservaRequestDto;
 import com.reservas.app.reserva.dto.ReservaDetalleResponseDto;
 import com.reservas.app.reserva.dto.ReservaPublicCreatedResponseDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
-import com.reservas.app.reserva.entity.CanceladaPor;
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.entity.Reserva;
 import com.reservas.app.reserva.repository.ReservaRepository;
