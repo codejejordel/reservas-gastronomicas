@@ -10,14 +10,14 @@ import com.mercadopago.resources.preference.Preference;
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.entity.Reserva;
 import com.reservas.app.reserva.pago.dto.PagoResponseDto;
+import com.reservas.app.reserva.pago.dto.PagoPublicPreferenceResponseDto;
 import com.reservas.app.reserva.pago.dto.PagoReturnResponseDto;
 import com.reservas.app.reserva.pago.entity.EstadoPago;
 import com.reservas.app.reserva.pago.entity.Pago;
 import com.reservas.app.reserva.pago.repository.PagoRepository;
 import com.reservas.app.reserva.repository.ReservaRepository;
 import com.reservas.app.reserva.service.CotizacionReservaService;
-import com.reservas.app.sucursal.configuracion.entity.ConfiguracionSucursal;
-import com.reservas.app.sucursal.configuracion.repository.ConfiguracionSucursalRepository;
+import com.reservas.app.reserva.service.ReservaPublicAccessService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,12 +50,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PagoService {
 
-    private static final int MAX_PROVIDER_RESPONSE_LOG_LENGTH = 1000;
-
     private final PagoRepository pagoRepository;
     private final ReservaRepository reservaRepository;
     private final CotizacionReservaService cotizacionReservaService;
-    private final ConfiguracionSucursalRepository configuracionSucursalRepository;
+    private final ReservaPublicAccessService publicAccessService;
     private final PreferenceClient preferenceClient;
     private final PaymentClient paymentClient;
     private final Clock clock;
@@ -76,9 +74,14 @@ public class PagoService {
     private String frontendUrl;
 
     @Transactional
-    public PagoResponseDto crearOReutilizarPreferencia(String codigoReserva) {
+    public PagoPublicPreferenceResponseDto crearOReutilizarPreferencia(
+            String codigoReserva, String accessToken) {
         Reserva reserva = reservaRepository.findByCodigoReservaForUpdate(codigoReserva)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada"));
+        publicAccessService.authorize(reserva, accessToken);
+
+        Pago pagoExistente = pagoRepository.findByReservaId(reserva.getId()).orElse(null);
+        publicAccessService.expireIfElapsed(reserva, pagoExistente);
 
         if (reserva.getEstado() != EstadoReserva.PENDIENTE_PAGO) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -86,9 +89,8 @@ public class PagoService {
         }
 
         LocalDateTime ahora = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
-        Pago pagoExistente = pagoRepository.findByReservaId(reserva.getId()).orElse(null);
         if (esPreferenciaReutilizable(pagoExistente, ahora)) {
-            return toDto(pagoExistente);
+            return toPublicDto(pagoExistente);
         }
         if (pagoExistente != null
                 && pagoExistente.getEstado() != EstadoPago.PENDIENTE
@@ -96,7 +98,7 @@ public class PagoService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya tiene un pago procesado");
         }
 
-        String accessToken = requireGlobalAccessToken();
+        String mercadoPagoAccessToken = requireGlobalAccessToken();
         BigDecimal monto = cotizacionReservaService
                 .cotizar(reserva.getSucursal().getId(), reserva.getCantPersonas())
                 .totalAPagarAhora();
@@ -105,16 +107,15 @@ public class PagoService {
                     "La reserva no tiene un monto válido para pagar");
         }
 
-        ConfiguracionSucursal configuracion = configuracionSucursalRepository
-                .findBySucursalId(reserva.getSucursal().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "La sucursal no tiene configuración"));
-        LocalDateTime expiracion = ahora.plusMinutes(configuracion.getMinutosLockPago());
+        LocalDateTime expiracion = reserva.getFechaLimitePago();
+        if (expiracion == null || !expiracion.isAfter(ahora)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El plazo para pagar la reserva expiró");
+        }
         OffsetDateTime inicioMp = OffsetDateTime.of(ahora, ZoneOffset.UTC);
         OffsetDateTime expiracionMp = OffsetDateTime.of(expiracion, ZoneOffset.UTC);
 
         try {
-            MPRequestOptions options = MPRequestOptions.builder().accessToken(accessToken).build();
+            MPRequestOptions options = MPRequestOptions.builder().accessToken(mercadoPagoAccessToken).build();
 
             PreferenceItemRequest item = PreferenceItemRequest.builder()
                     .title("Pago de reserva " + reserva.getCodigoReserva())
@@ -124,9 +125,9 @@ public class PagoService {
                     .build();
 
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success(buildUrl(frontendUrl, "reserva", codigoReserva, "pago-exitoso"))
-                    .failure(buildUrl(frontendUrl, "reserva", codigoReserva, "pago-fallido"))
-                    .pending(buildUrl(frontendUrl, "reserva", codigoReserva, "pago-pendiente"))
+                    .success(buildReturnUrl(codigoReserva, "pago-exitoso", accessToken))
+                    .failure(buildReturnUrl(codigoReserva, "pago-fallido", accessToken))
+                    .pending(buildReturnUrl(codigoReserva, "pago-pendiente", accessToken))
                     .build();
 
             PreferenceRequest mpRequest = PreferenceRequest.builder()
@@ -158,16 +159,12 @@ public class PagoService {
             pago.setFechaPago(null);
             pago.setMetodoPago(null);
 
-            return toDto(pagoRepository.save(pago));
+            return toPublicDto(pagoRepository.save(pago));
 
         } catch (MPApiException exception) {
-            String responseContent = exception.getApiResponse() == null
-                    ? null
-                    : exception.getApiResponse().getContent();
-            log.error("MercadoPago rechazó la preferencia para reserva {}: status={}, response={}",
+            log.error("MercadoPago rechazó la preferencia para reserva {}: status={}",
                     codigoReserva,
-                    exception.getStatusCode(),
-                    sanitizeProviderResponse(responseContent));
+                    exception.getStatusCode());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Error al crear preferencia de pago en MercadoPago");
         } catch (MPException exception) {
@@ -178,9 +175,11 @@ public class PagoService {
     }
 
     @Transactional
-    public PagoReturnResponseDto reconciliarRetorno(String codigoReserva, String paymentId) {
+    public PagoReturnResponseDto reconciliarRetorno(
+            String codigoReserva, String accessToken, String paymentId) {
         Reserva reserva = reservaRepository.findByCodigoReservaForUpdate(codigoReserva)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada"));
+        publicAccessService.authorize(reserva, accessToken);
         Pago pago = pagoRepository.findByReservaId(reserva.getId()).orElse(null);
 
         if (paymentId == null || paymentId.isBlank()) {
@@ -519,6 +518,25 @@ public class PagoService {
         }
     }
 
+    private String buildReturnUrl(String codigoReserva, String outcomePath, String accessToken) {
+        try {
+            URI uri = UriComponentsBuilder.fromUriString(frontendUrl)
+                    .pathSegment("reserva", codigoReserva, outcomePath)
+                    .queryParam("token", accessToken)
+                    .build()
+                    .encode()
+                    .toUri();
+            if (!uri.isAbsolute() || uri.getHost() == null
+                    || !("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))) {
+                throw new IllegalArgumentException("URL must be an absolute HTTP(S) URL");
+            }
+            return uri.toString();
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "La URL de retorno de Mercado Pago no está configurada correctamente");
+        }
+    }
+
     private record Conciliacion(
             boolean verified,
             String providerStatus,
@@ -536,22 +554,6 @@ public class PagoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro de pago no encontrado para reserva: "+reservaId));
     }
 
-    private static String sanitizeProviderResponse(String content) {
-        if (content == null || content.isBlank()) {
-            return "<empty>";
-        }
-
-        StringBuilder sanitized = new StringBuilder(Math.min(content.length(), MAX_PROVIDER_RESPONSE_LOG_LENGTH));
-        for (int index = 0; index < content.length()
-                && sanitized.length() < MAX_PROVIDER_RESPONSE_LOG_LENGTH; index++) {
-            char character = content.charAt(index);
-            if (!Character.isISOControl(character)) {
-                sanitized.append(character);
-            }
-        }
-        return sanitized.isEmpty() ? "<empty>" : sanitized.toString();
-    }
-
     private PagoResponseDto toDto(Pago pago) {
         return new PagoResponseDto(
                 pago.getId(),
@@ -567,5 +569,9 @@ public class PagoService {
                 pago.getMontoReembolsado(),
                 pago.getFechaCreacion()
         );
+    }
+
+    private PagoPublicPreferenceResponseDto toPublicDto(Pago pago) {
+        return new PagoPublicPreferenceResponseDto(pago.getLinkPago(), pago.getFechaExpiracion());
     }
 }

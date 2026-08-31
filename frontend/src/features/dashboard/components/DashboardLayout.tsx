@@ -78,15 +78,11 @@ export function DashboardLayout() {
 
               {/* Grid principal */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {/* Metric Card 1 — Reservas Hoy */}
-                <MetricCard
-                  label="Reservas hoy"
-                  icon="calendar"
-                  queryKey="reservas-hoy"
-                  sucursalId={sucursalId}
-                  formatter={(data) => String(data?.length ?? 0)}
-                  description="Total del día"
-                />
+                {/* Reservas Próximas */}
+                <div className="xl:col-span-1 md:row-span-2">
+                  <ReservasCard sucursalId={sucursalId} />
+                </div>
+                
 
                 {/* Hero Card — col-span 2, row-span 2 */}
                 <div className="md:col-span-2 md:row-span-2">
@@ -108,10 +104,15 @@ export function DashboardLayout() {
                   description="Total del día"
                 />
 
-                {/* Reservas Próximas */}
-                <div className="xl:col-span-1 md:row-span-2">
-                  <ReservasCard sucursalId={sucursalId} />
-                </div>
+                {/* Metric Card 1 — Reservas Hoy */}
+                <MetricCard
+                  label="Reservas hoy"
+                  icon="calendar"
+                  queryKey="reservas-hoy"
+                  sucursalId={sucursalId}
+                  formatter={(data) => String(data?.length ?? 0)}
+                  description="Total del día"
+                />
 
                 {/* Metric Card 3 — Rating */}
                 <MetricCard

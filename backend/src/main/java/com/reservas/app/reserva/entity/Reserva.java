@@ -32,6 +32,12 @@ public class Reserva {
     @Column(name = "codigo_reserva", nullable = false, unique = true, length = 20)
     private String codigoReserva;
 
+    @Column(name = "public_access_token_hash", nullable = false, length = 64)
+    private String publicAccessTokenHash;
+
+    @Column(name = "fecha_limite_pago")
+    private LocalDateTime fechaLimitePago;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sucursal_id", nullable = false)
     private Sucursal sucursal;

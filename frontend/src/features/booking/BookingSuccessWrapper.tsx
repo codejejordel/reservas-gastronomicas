@@ -2,13 +2,12 @@ import type React from 'react'
 import { useParams } from '@tanstack/react-router'
 import { BookingSuccessPage } from './components/success/BookingSuccessPage'
 import { useRestaurantePublico } from './hooks/useRestaurantePublico'
-import { useReservaByCodigo } from './hooks/useReservaByCodigo'
 
 export function BookingSuccessWrapper() {
   const { slug, codigo } = useParams({ from: '/r/$slug/reservar/exito/$codigo' })
+  const accessToken = new URLSearchParams(window.location.search).get('token') ?? undefined
 
   const { data: restaurante } = useRestaurantePublico(slug)
-  const { data: reserva } = useReservaByCodigo(codigo)
 
   const cssVars = {
     '--color-primary': restaurante?.colorPrimario || 'var(--color-primary)',
@@ -17,7 +16,7 @@ export function BookingSuccessWrapper() {
 
   return (
     <div style={cssVars}>
-      <BookingSuccessPage codigo={codigo} restaurante={restaurante} reserva={reserva} />
+      <BookingSuccessPage codigo={codigo} accessToken={accessToken} restaurante={restaurante} />
     </div>
   )
 }

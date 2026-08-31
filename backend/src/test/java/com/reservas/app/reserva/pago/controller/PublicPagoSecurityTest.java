@@ -3,7 +3,7 @@ package com.reservas.app.reserva.pago.controller;
 import com.reservas.app.common.JwtUtil;
 import com.reservas.app.config.JwtAuthFilter;
 import com.reservas.app.config.SecurityConfig;
-import com.reservas.app.reserva.pago.dto.PagoResponseDto;
+import com.reservas.app.reserva.pago.dto.PagoPublicPreferenceResponseDto;
 import com.reservas.app.reserva.pago.dto.PagoReturnResponseDto;
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.pago.entity.EstadoPago;
@@ -52,24 +52,16 @@ class PublicPagoSecurityTest {
 
     @Test
     void allowsAnonymousPostOnlyOnOpaquePreferenceRouteWithoutBody() throws Exception {
-        when(pagoService.crearOReutilizarPreferencia("RSV-A1B2C3D4")).thenReturn(new PagoResponseDto(
-                9L,
-                41L,
-                new BigDecimal("3500.00"),
-                EstadoPago.PENDIENTE,
-                null,
-                "pref-123",
+        when(pagoService.crearOReutilizarPreferencia("RSV-A1B2C3D4", "private-token"))
+                .thenReturn(new PagoPublicPreferenceResponseDto(
                 "https://checkout.example/pref-123",
-                null,
-                LocalDateTime.parse("2026-08-24T15:10:00"),
-                null,
-                BigDecimal.ZERO,
-                LocalDateTime.parse("2026-08-24T15:00:00")));
+                LocalDateTime.parse("2026-08-24T15:10:00")));
 
-        mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/preference"))
+        mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/preference")
+                        .header("X-Reservation-Token", "private-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mercadoPagoPreferenceId").value("pref-123"))
-                .andExpect(jsonPath("$.linkPago").value("https://checkout.example/pref-123"));
+                .andExpect(jsonPath("$.checkoutUrl").value("https://checkout.example/pref-123"))
+                .andExpect(jsonPath("$.mercadoPagoPreferenceId").doesNotExist());
 
         mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/preference/extra"))
                 .andExpect(status().isForbidden());
@@ -77,11 +69,12 @@ class PublicPagoSecurityTest {
 
     @Test
     void preservesPublicPaymentErrorsThroughErrorDispatch() throws Exception {
-        when(pagoService.crearOReutilizarPreferencia("RSV-A1B2C3D4"))
+        when(pagoService.crearOReutilizarPreferencia("RSV-A1B2C3D4", "private-token"))
                 .thenThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                         "Mercado Pago no está configurado"));
 
-        mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/preference"))
+        mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/preference")
+                        .header("X-Reservation-Token", "private-token"))
                 .andExpect(status().isServiceUnavailable());
 
         mockMvc.perform(get("/error")
@@ -101,7 +94,7 @@ class PublicPagoSecurityTest {
 
     @Test
     void allowsAnonymousValidatedReturnRouteAndNoBroaderPath() throws Exception {
-        when(pagoService.reconciliarRetorno("RSV-A1B2C3D4", "9001")).thenReturn(new PagoReturnResponseDto(
+        when(pagoService.reconciliarRetorno("RSV-A1B2C3D4", "private-token", "9001")).thenReturn(new PagoReturnResponseDto(
                 "RSV-A1B2C3D4",
                 EstadoReserva.CONFIRMADA,
                 EstadoPago.APROBADO,
@@ -110,6 +103,7 @@ class PublicPagoSecurityTest {
                 PagoReturnResponseDto.Outcome.APPROVED));
 
         mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/return")
+                        .header("X-Reservation-Token", "private-token")
                         .contentType("application/json")
                         .content("{\"paymentId\":\"9001\"}"))
                 .andExpect(status().isOk())
@@ -118,6 +112,7 @@ class PublicPagoSecurityTest {
                 .andExpect(jsonPath("$.outcome").value("APPROVED"));
 
         mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/return")
+                        .header("X-Reservation-Token", "private-token")
                         .contentType("application/json")
                         .content("{\"paymentId\":\"approved\"}"))
                 .andExpect(status().isBadRequest());
@@ -126,5 +121,17 @@ class PublicPagoSecurityTest {
                         .contentType("application/json")
                         .content("{}"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void invalidCapabilityBlocksPublicReturn() throws Exception {
+        when(pagoService.reconciliarRetorno("RSV-A1B2C3D4", "invalid-token", "9001"))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada"));
+
+        mockMvc.perform(post("/reserva/public/RSV-A1B2C3D4/pago/return")
+                        .header("X-Reservation-Token", "invalid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentId\":\"9001\"}"))
+                .andExpect(status().isNotFound());
     }
 }

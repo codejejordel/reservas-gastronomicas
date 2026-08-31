@@ -5,6 +5,7 @@ import com.reservas.app.reserva.dto.CreateReservaPublicaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaRequestDto;
 import com.reservas.app.reserva.dto.ReservaDetalleResponseDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
+import com.reservas.app.reserva.dto.ReservaPublicCreatedResponseDto;
 import com.reservas.app.reserva.entity.EstadoReserva;
 import com.reservas.app.reserva.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -115,7 +116,7 @@ public class ReservaController {
 
     @PostMapping("/public")
     @Operation(summary = "Crear reserva pública (con upsert de cliente inline)")
-    public ResponseEntity<ReservaResponseDto> createPublic(@Valid @RequestBody CreateReservaPublicaRequestDto request) {
+    public ResponseEntity<ReservaPublicCreatedResponseDto> createPublic(@Valid @RequestBody CreateReservaPublicaRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(reservaService.createPublic(request));
     }
 }

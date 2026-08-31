@@ -17,8 +17,7 @@ import com.reservas.app.reserva.pago.entity.Pago;
 import com.reservas.app.reserva.pago.repository.PagoRepository;
 import com.reservas.app.reserva.repository.ReservaRepository;
 import com.reservas.app.reserva.service.CotizacionReservaService;
-import com.reservas.app.sucursal.configuracion.entity.ConfiguracionSucursal;
-import com.reservas.app.sucursal.configuracion.repository.ConfiguracionSucursalRepository;
+import com.reservas.app.reserva.service.ReservaPublicAccessService;
 import com.reservas.app.sucursal.entity.Sucursal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +45,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -56,6 +57,7 @@ class PagoServiceTest {
 
     private static final String CODIGO = "RSV-A1B2C3D4";
     private static final Instant AHORA = Instant.parse("2026-08-24T15:00:00Z");
+    private static final String ACCESS_TOKEN = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     @Mock
     private PagoRepository pagoRepository;
@@ -64,7 +66,7 @@ class PagoServiceTest {
     @Mock
     private CotizacionReservaService cotizacionReservaService;
     @Mock
-    private ConfiguracionSucursalRepository configuracionRepository;
+    private ReservaPublicAccessService publicAccessService;
     @Mock
     private PreferenceClient preferenceClient;
     @Mock
@@ -76,7 +78,6 @@ class PagoServiceTest {
 
     private PagoService service;
     private Reserva reserva;
-    private ConfiguracionSucursal configuracion;
 
     @BeforeEach
     void setUp() {
@@ -84,7 +85,7 @@ class PagoServiceTest {
                 pagoRepository,
                 reservaRepository,
                 cotizacionReservaService,
-                configuracionRepository,
+                publicAccessService,
                 preferenceClient,
                 paymentClient,
                 Clock.fixed(AHORA, ZoneOffset.UTC));
@@ -102,9 +103,8 @@ class PagoServiceTest {
         reserva.setSucursal(sucursal);
         reserva.setCantPersonas(3);
         reserva.setEstado(EstadoReserva.PENDIENTE_PAGO);
+        reserva.setFechaLimitePago(LocalDateTime.ofInstant(AHORA, ZoneOffset.UTC).plusMinutes(10));
 
-        configuracion = new ConfiguracionSucursal();
-        configuracion.setMinutosLockPago(10);
     }
 
     @Test
@@ -116,7 +116,7 @@ class PagoServiceTest {
                 .thenReturn(preference);
         when(pagoRepository.save(any(Pago.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        PagoResponseDto response = service.crearOReutilizarPreferencia(CODIGO);
+        var response = service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN);
 
         ArgumentCaptor<PreferenceRequest> requestCaptor = ArgumentCaptor.forClass(PreferenceRequest.class);
         ArgumentCaptor<MPRequestOptions> optionsCaptor = ArgumentCaptor.forClass(MPRequestOptions.class);
@@ -136,11 +136,11 @@ class PagoServiceTest {
             assertThat(item.getUnitPrice()).isEqualByComparingTo("3500.00");
         });
         assertThat(request.getBackUrls().getSuccess())
-                .isEqualTo("http://localhost:3000/reserva/RSV-A1B2C3D4/pago-exitoso");
+                .isEqualTo("http://localhost:3000/reserva/RSV-A1B2C3D4/pago-exitoso?token=" + ACCESS_TOKEN);
         assertThat(request.getBackUrls().getFailure())
-                .isEqualTo("http://localhost:3000/reserva/RSV-A1B2C3D4/pago-fallido");
+                .isEqualTo("http://localhost:3000/reserva/RSV-A1B2C3D4/pago-fallido?token=" + ACCESS_TOKEN);
         assertThat(request.getBackUrls().getPending())
-                .isEqualTo("http://localhost:3000/reserva/RSV-A1B2C3D4/pago-pendiente");
+                .isEqualTo("http://localhost:3000/reserva/RSV-A1B2C3D4/pago-pendiente?token=" + ACCESS_TOKEN);
         assertThat(request.getNotificationUrl()).isEqualTo("http://localhost:8080/api/pagos/webhook/41");
 
         ArgumentCaptor<Pago> pagoCaptor = ArgumentCaptor.forClass(Pago.class);
@@ -150,8 +150,7 @@ class PagoServiceTest {
                 .isEqualTo(LocalDateTime.parse("2026-08-24T15:10:00"));
         assertThat(pagoCaptor.getValue().getMercadoPagoPreferenceId()).isEqualTo("pref-123");
         assertThat(pagoCaptor.getValue().getLinkPago()).isEqualTo(preference.getInitPoint());
-        assertThat(response.getMercadoPagoPreferenceId()).isEqualTo("pref-123");
-        assertThat(response.getLinkPago()).isEqualTo(preference.getInitPoint());
+        assertThat(response.getCheckoutUrl()).isEqualTo(preference.getInitPoint());
     }
 
     @Test
@@ -166,11 +165,10 @@ class PagoServiceTest {
         when(reservaRepository.findByCodigoReservaForUpdate(CODIGO)).thenReturn(Optional.of(reserva));
         when(pagoRepository.findByReservaId(41L)).thenReturn(Optional.of(existing));
 
-        PagoResponseDto response = service.crearOReutilizarPreferencia(CODIGO);
+        var response = service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN);
 
-        assertThat(response.getMercadoPagoPreferenceId()).isEqualTo("pref-existing");
-        assertThat(response.getLinkPago()).isEqualTo("https://checkout.example/existing");
-        verifyNoInteractions(preferenceClient, cotizacionReservaService, configuracionRepository);
+        assertThat(response.getCheckoutUrl()).isEqualTo("https://checkout.example/existing");
+        verifyNoInteractions(preferenceClient, cotizacionReservaService);
         verify(pagoRepository, never()).save(any());
     }
 
@@ -193,17 +191,15 @@ class PagoServiceTest {
                 new BigDecimal("3500.00"),
                 24,
                 15));
-        when(configuracionRepository.findBySucursalId(7L)).thenReturn(Optional.of(configuracion));
         when(preference.getId()).thenReturn("pref-retry");
         when(preference.getInitPoint()).thenReturn("https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=pref-retry");
         when(preferenceClient.create(any(PreferenceRequest.class), any(MPRequestOptions.class)))
                 .thenReturn(preference);
         when(pagoRepository.save(rejected)).thenReturn(rejected);
 
-        PagoResponseDto response = service.crearOReutilizarPreferencia(CODIGO);
+        var response = service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN);
 
-        assertThat(response.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
-        assertThat(response.getMercadoPagoPreferenceId()).isEqualTo("pref-retry");
+        assertThat(response.getCheckoutUrl()).isEqualTo(preference.getInitPoint());
         assertThat(rejected.getMercadoPagoPaymentId()).isNull();
         assertThat(rejected.getFechaPago()).isNull();
         assertThat(rejected.getMetodoPago()).isNull();
@@ -214,11 +210,55 @@ class PagoServiceTest {
         reserva.setEstado(EstadoReserva.CONFIRMADA);
         when(reservaRepository.findByCodigoReservaForUpdate(CODIGO)).thenReturn(Optional.of(reserva));
 
-        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO))
+        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN))
                 .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
                         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
 
-        verifyNoInteractions(preferenceClient, pagoRepository);
+        verifyNoInteractions(preferenceClient);
+        verify(pagoRepository).findByReservaId(41L);
+    }
+
+    @Test
+    void authorizesCapabilityBeforeReadingOrReturningPaymentMetadata() {
+        when(reservaRepository.findByCodigoReservaForUpdate(CODIGO)).thenReturn(Optional.of(reserva));
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada"))
+                .when(publicAccessService).authorize(reserva, "invalid-token");
+
+        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO, "invalid-token"))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
+                        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(pagoRepository, preferenceClient, cotizacionReservaService);
+    }
+
+    @Test
+    void invalidCapabilityBlocksReturnBeforePaymentOrProviderAccess() {
+        when(reservaRepository.findByCodigoReservaForUpdate(CODIGO)).thenReturn(Optional.of(reserva));
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada"))
+                .when(publicAccessService).authorize(reserva, "invalid-token");
+
+        assertThatThrownBy(() -> service.reconciliarRetorno(CODIGO, "invalid-token", "9001"))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
+                        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(pagoRepository, paymentClient);
+    }
+
+    @Test
+    void refusesPreferenceAfterAuthoritativeDeadlineTransition() {
+        when(reservaRepository.findByCodigoReservaForUpdate(CODIGO)).thenReturn(Optional.of(reserva));
+        when(pagoRepository.findByReservaId(41L)).thenReturn(Optional.empty());
+        doAnswer(invocation -> {
+            reserva.setEstado(EstadoReserva.EXPIRADA);
+            return null;
+        }).when(publicAccessService).expireIfElapsed(reserva, null);
+
+        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
+                        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+
+        verifyNoInteractions(preferenceClient, cotizacionReservaService);
+        verify(pagoRepository, never()).save(any());
     }
 
     @Test
@@ -227,11 +267,11 @@ class PagoServiceTest {
         when(reservaRepository.findByCodigoReservaForUpdate(CODIGO)).thenReturn(Optional.of(reserva));
         when(pagoRepository.findByReservaId(41L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO))
+        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN))
                 .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
                         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
 
-        verifyNoInteractions(preferenceClient, cotizacionReservaService, configuracionRepository);
+        verifyNoInteractions(preferenceClient, cotizacionReservaService);
         verify(pagoRepository, never()).save(any());
     }
 
@@ -241,7 +281,7 @@ class PagoServiceTest {
         when(preferenceClient.create(any(PreferenceRequest.class), any(MPRequestOptions.class)))
                 .thenThrow(new MPException("provider unavailable"));
 
-        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO))
+        assertThatThrownBy(() -> service.crearOReutilizarPreferencia(CODIGO, ACCESS_TOKEN))
                 .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
                         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY));
 
@@ -255,7 +295,7 @@ class PagoServiceTest {
         when(payment.getPaymentMethodId()).thenReturn("visa");
         when(pagoRepository.save(any(Pago.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isTrue();
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.APPROVED);
@@ -277,7 +317,7 @@ class PagoServiceTest {
         when(payment.getId()).thenReturn(9001L);
         when(payment.getExternalReference()).thenReturn("RSV-OTHER");
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isFalse();
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.UNVERIFIED);
@@ -293,7 +333,7 @@ class PagoServiceTest {
         stubVerifiedProviderPayment("approved");
         when(payment.getTransactionAmount()).thenReturn(new BigDecimal("3499.99"));
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isFalse();
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
@@ -308,7 +348,7 @@ class PagoServiceTest {
         stubVerifiedProviderPayment("approved");
         when(payment.getCollectorId()).thenReturn(999999L);
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isFalse();
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
@@ -322,7 +362,7 @@ class PagoServiceTest {
         Pago pago = stubReturnPayment(EstadoPago.PENDIENTE);
         ReflectionTestUtils.setField(service, "globalMpCollectorId", "  ");
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isFalse();
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
@@ -336,7 +376,7 @@ class PagoServiceTest {
         Pago pago = stubReturnPayment(EstadoPago.PENDIENTE);
         stubVerifiedProviderPayment("in_process");
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isTrue();
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.PENDING);
@@ -352,7 +392,7 @@ class PagoServiceTest {
         stubVerifiedProviderPayment("rejected");
         when(payment.getPaymentMethodId()).thenReturn("master");
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.REJECTED);
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.RECHAZADO);
@@ -369,7 +409,7 @@ class PagoServiceTest {
         pago.setMercadoPagoPaymentId("9001");
         stubVerifiedProviderPayment("rejected");
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.APPROVED);
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.APROBADO);
@@ -382,7 +422,7 @@ class PagoServiceTest {
     void missingPaymentIdReturnsUnverifiedLocalContextWithoutProviderCall() {
         Pago pago = stubReturnPayment(EstadoPago.PENDIENTE);
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, null);
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, null);
 
         assertThat(response.isVerified()).isFalse();
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.UNVERIFIED);
@@ -398,7 +438,7 @@ class PagoServiceTest {
         when(paymentClient.get(any(Long.class), any(MPRequestOptions.class)))
                 .thenThrow(new MPException("provider unavailable"));
 
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.isVerified()).isFalse();
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.UNVERIFIED);
@@ -464,7 +504,7 @@ class PagoServiceTest {
 
         service.procesarWebhook(41L, 9001L, "9001", signature, "request-race");
         when(payment.getStatus()).thenReturn("rejected");
-        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, "9001");
+        PagoReturnResponseDto response = service.reconciliarRetorno(CODIGO, ACCESS_TOKEN, "9001");
 
         assertThat(response.getOutcome()).isEqualTo(PagoReturnResponseDto.Outcome.APPROVED);
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.APROBADO);
@@ -483,7 +523,6 @@ class PagoServiceTest {
                 new BigDecimal("3500.00"),
                 24,
                 15));
-        when(configuracionRepository.findBySucursalId(7L)).thenReturn(Optional.of(configuracion));
     }
 
     private Pago stubReturnPayment(EstadoPago estado) {

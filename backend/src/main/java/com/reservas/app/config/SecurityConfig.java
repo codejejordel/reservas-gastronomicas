@@ -51,9 +51,9 @@ public class SecurityConfig {
                         
                         // Reserva pública
                         .requestMatchers(HttpMethod.POST, "/reserva/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/reserva/public/*/status").permitAll()
                         .requestMatchers(HttpMethod.POST, "/reserva/public/*/pago/preference").permitAll()
                         .requestMatchers(HttpMethod.POST, "/reserva/public/*/pago/return").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/reserva/codigo/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/reserva/*/cancelar").permitAll()
 
                         // Webhook MercadoPago

@@ -6,10 +6,10 @@ export function useCrearReserva() {
 
   return useMutation<ReservaResponse, Error, CrearReservaPublicaPayload>({
     mutationFn: crearReservaPublica,
-    onSuccess: (data) => {
+    onSuccess: (_data, variables) => {
       // Invalidar disponibilidad para la sucursal y fecha
       queryClient.invalidateQueries({
-        queryKey: ['disponibilidad', data.sucursalId],
+        queryKey: ['disponibilidad', variables.sucursalId],
       })
     },
   })

@@ -8,6 +8,7 @@ import com.reservas.app.reserva.dto.CancelarReservaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaPublicaRequestDto;
 import com.reservas.app.reserva.dto.CreateReservaRequestDto;
 import com.reservas.app.reserva.dto.ReservaDetalleResponseDto;
+import com.reservas.app.reserva.dto.ReservaPublicCreatedResponseDto;
 import com.reservas.app.reserva.dto.ReservaResponseDto;
 import com.reservas.app.reserva.entity.CanceladaPor;
 import com.reservas.app.reserva.entity.EstadoReserva;
@@ -50,6 +51,7 @@ public class ReservaService {
     private final MesaRepository mesaRepository;
     private final AsignacionMesaRepository asignacionMesaRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReservaPublicAccessService publicAccessService;
 
     @Transactional
     public ReservaResponseDto create(CreateReservaRequestDto request) {
@@ -90,6 +92,7 @@ public class ReservaService {
         reserva.setObservaciones(request.getObservaciones());
         reserva.setCanalNotif(request.getCanalNotif());
         reserva.setEstado(estadoInicial);
+        publicAccessService.initialize(reserva, config);
 
         if (estadoInicial == EstadoReserva.CONFIRMADA) {
             reserva.setFechaConfirmacion(LocalDateTime.now());
@@ -101,7 +104,7 @@ public class ReservaService {
     }
 
     @Transactional
-    public ReservaResponseDto createPublic(CreateReservaPublicaRequestDto request) {
+    public ReservaPublicCreatedResponseDto createPublic(CreateReservaPublicaRequestDto request) {
         Sucursal sucursal = sucursalRepository.findById(request.getSucursalId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sucursal no encontrada"));
 
@@ -147,6 +150,7 @@ public class ReservaService {
         reserva.setObservaciones(request.getObservaciones());
         reserva.setCanalNotif(request.getCanalNotif());
         reserva.setEstado(estadoInicial);
+        String accessToken = publicAccessService.initialize(reserva, config);
 
         if (estadoInicial == EstadoReserva.CONFIRMADA) {
             reserva.setFechaConfirmacion(LocalDateTime.now());
@@ -154,7 +158,14 @@ public class ReservaService {
 
         Reserva saved = reservaRepository.save(reserva);
         eventPublisher.publishEvent(ReservaCreatedEvent.from(saved));
-        return toDto(saved);
+        return new ReservaPublicCreatedResponseDto(
+                saved.getCodigoReserva(),
+                saved.getEstado(),
+                saved.getFechaReserva(),
+                saved.getHoraReserva(),
+                saved.getCantPersonas(),
+                accessToken,
+                saved.getFechaLimitePago());
     }
 
     public ReservaResponseDto getById(Long id) {

@@ -51,7 +51,7 @@ export function ReservasCard({ sucursalId }: ReservasCardProps) {
       </div>
 
       {/* Lista */}
-      <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
+      <div className={`flex flex-1 ${visibleReservas.length === 0 ? 'items-center' : 'items-start'} justify-center min-h-0 overflow-y-auto mx-1 px-1`}>
         <AnimatePresence mode="popLayout">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -70,7 +70,7 @@ export function ReservasCard({ sucursalId }: ReservasCardProps) {
               <p className="text-[11px] text-on-surface-dim mt-0.5">Próximas reservas aparecerán aquí</p>
             </motion.div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full">
               {visibleReservas.map((reserva: ReservaDashboard) => (
                 <ReservaItem
                   key={reserva.id}

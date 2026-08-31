@@ -78,39 +78,31 @@ export interface CrearReservaPublicaPayload {
 }
 
 export interface ReservaResponse {
-  id: number
   codigoReserva: string
-  sucursalId: number
-  clienteId: number
-  clienteNombre: string
   fechaReserva: string
   horaReserva: string
   cantPersonas: number
   estado: string
-  observaciones?: string
-  canalNotif?: string
-  fechaConfirmacion?: string
-  fechaCancelacion?: string
-  motivoCancelacion?: string
-  canceladaPor?: string
-  fechaCreacion: string
+  accessToken: string
+  fechaLimitePago: string | null
 }
 
 export type EstadoPago = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'REEMBOLSADO' | 'EXPIRADO'
 
 export interface PagoResponse {
-  id: number
-  reservaId: number
-  monto: number
-  estado: EstadoPago
-  mercadoPagoPaymentId: string | null
-  mercadoPagoPreferenceId: string | null
-  linkPago: string | null
-  fechaPago: string | null
+  checkoutUrl: string
   fechaExpiracion: string | null
-  metodoPago: string | null
-  montoReembolsado: number
-  fechaCreacion: string
+}
+
+export interface ReservaPublicStatus {
+  codigoReserva: string
+  estado: string
+  fechaReserva: string
+  horaReserva: string
+  cantPersonas: number
+  estadoPago: EstadoPago | null
+  puedeContinuarPago: boolean
+  fechaLimitePago: string | null
 }
 
 export type PagoReturnOutcome = 'APPROVED' | 'PENDING' | 'REJECTED' | 'EXPIRED' | 'UNVERIFIED'
@@ -132,15 +124,21 @@ export async function crearReservaPublica(payload: CrearReservaPublicaPayload): 
   })
 }
 
-export async function crearPreferenciaPago(codigoReserva: string): Promise<PagoResponse> {
+function accessHeaders(accessToken: string): HeadersInit {
+  return { 'X-Reservation-Token': accessToken }
+}
+
+export async function crearPreferenciaPago(codigoReserva: string, accessToken: string): Promise<PagoResponse> {
   return apiFetch(`/api/reserva/public/${encodeURIComponent(codigoReserva)}/pago/preference`, {
     method: 'POST',
     skipAuth: true,
+    headers: accessHeaders(accessToken),
   })
 }
 
 export async function reconciliarRetornoPago(
   codigoReserva: string,
+  accessToken: string,
   paymentId: string | null,
   signal?: AbortSignal,
 ): Promise<PagoReturnResponse> {
@@ -148,10 +146,19 @@ export async function reconciliarRetornoPago(
     method: 'POST',
     skipAuth: true,
     signal,
+    headers: accessHeaders(accessToken),
     body: JSON.stringify({ paymentId }),
   })
 }
 
-export async function getReservaByCodigo(codigo: string, signal?: AbortSignal): Promise<ReservaResponse> {
-  return apiFetch(`/api/reserva/codigo/${codigo}`, { skipAuth: true, signal })
+export async function getReservaPublicStatus(
+  codigo: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<ReservaPublicStatus> {
+  return apiFetch(`/api/reserva/public/${encodeURIComponent(codigo)}/status`, {
+    skipAuth: true,
+    signal,
+    headers: accessHeaders(accessToken),
+  })
 }

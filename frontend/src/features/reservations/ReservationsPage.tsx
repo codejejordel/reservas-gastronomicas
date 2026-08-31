@@ -1,34 +1,431 @@
-import { useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AnimatePresence, motion } from 'motion/react'
-import { ChevronLeft, ChevronRight, Search, Users, X } from 'lucide-react'
-import { DashboardShell } from '@/features/dashboard/components/DashboardShell'
-import { useSucursalSeleccionadaStore } from '@/features/dashboard/state/sucursalSeleccionadaStore'
-import { cancelReservation, completeReservation, confirmReservation, getReservationDetail, noShowReservation, searchReservations } from './reservationsApi'
-import type { EstadoReserva, ReservaListItem } from './types'
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "motion/react";
+import { ChevronLeft, ChevronRight, Search, Users, X } from "lucide-react";
+import { DashboardShell } from "@/features/dashboard/components/DashboardShell";
+import { useSucursalSeleccionadaStore } from "@/features/dashboard/state/sucursalSeleccionadaStore";
+import {
+  cancelReservation,
+  completeReservation,
+  confirmReservation,
+  getReservationDetail,
+  noShowReservation,
+  searchReservations,
+} from "./reservationsApi";
+import type { EstadoReserva, ReservaListItem } from "./types";
 
-const labels: Record<EstadoReserva, string> = { PENDIENTE_PAGO: 'Pendiente de pago', PENDIENTE_CONFIRMACION: 'Pendiente', CONFIRMADA: 'Confirmada', CANCELADA: 'Cancelada', COMPLETADA: 'Completada', NO_SHOW: 'No-show', EXPIRADA: 'Expirada' }
-const tones: Record<EstadoReserva, string> = { PENDIENTE_PAGO: 'bg-warning/10 text-warning', PENDIENTE_CONFIRMACION: 'bg-primary/10 text-primary', CONFIRMADA: 'bg-success/10 text-success', CANCELADA: 'bg-error/10 text-error', COMPLETADA: 'bg-surface-container-high text-on-surface-variant', NO_SHOW: 'bg-error/10 text-error', EXPIRADA: 'bg-surface-container-high text-on-surface-variant' }
-const isoToday = () => new Date().toISOString().slice(0, 10)
+const labels: Record<EstadoReserva, string> = {
+  PENDIENTE_PAGO: "Pendiente de pago",
+  PENDIENTE_CONFIRMACION: "Pendiente",
+  CONFIRMADA: "Confirmada",
+  CANCELADA: "Cancelada",
+  COMPLETADA: "Completada",
+  NO_SHOW: "No-show",
+  EXPIRADA: "Expirada",
+};
+const tones: Record<EstadoReserva, string> = {
+  PENDIENTE_PAGO: "bg-warning/10 text-warning",
+  PENDIENTE_CONFIRMACION: "bg-primary/10 text-primary",
+  CONFIRMADA: "bg-success/10 text-success",
+  CANCELADA: "bg-error/10 text-error",
+  COMPLETADA: "bg-surface-container-high text-on-surface-variant",
+  NO_SHOW: "bg-error/10 text-error",
+  EXPIRADA: "bg-surface-container-high text-on-surface-variant",
+};
+const isoToday = () => new Date().toISOString().slice(0, 10);
 
 export function ReservationsPage() {
-  const branchId = useSucursalSeleccionadaStore(state => state.sucursalId)
-  const [view, setView] = useState<'today' | 'future' | 'history'>('today')
-  const [q, setQ] = useState('')
-  const [page, setPage] = useState(0)
-  const [selected, setSelected] = useState<number | null>(null)
-  const queryClient = useQueryClient()
+  const branchId = useSucursalSeleccionadaStore((state) => state.sucursalId);
+  const [view, setView] = useState<"today" | "future" | "history">("today");
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const queryClient = useQueryClient();
   const filters = useMemo(() => {
-    const today = isoToday()
-    return { from: view === 'today' ? today : view === 'future' ? today : undefined, to: view === 'today' ? today : view === 'history' ? today : undefined, q, page, size: 20, sortDirection: view === 'history' ? 'DESC' as const : 'ASC' as const }
-  }, [view, q, page])
-  const reservations = useQuery({ queryKey: ['reservation-search', branchId, filters], queryFn: () => searchReservations(branchId!, filters), enabled: !!branchId })
-  const detail = useQuery({ queryKey: ['reservation-detail', selected], queryFn: () => getReservationDetail(selected!), enabled: !!selected })
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['reservation-search'] })
-  const run = async (action: () => Promise<unknown>) => { await action(); refresh(); queryClient.invalidateQueries({ queryKey: ['reservation-detail', selected] }) }
-  const metrics = useMemo(() => ({ total: reservations.data?.totalElements ?? 0, guests: reservations.data?.content.reduce((sum, item) => sum + item.cantPersonas, 0) ?? 0, pending: reservations.data?.content.filter(item => item.estado === 'PENDIENTE_CONFIRMACION').length ?? 0 }), [reservations.data])
+    const today = isoToday();
+    return {
+      from: view === "today" ? today : view === "future" ? today : undefined,
+      to: view === "today" ? today : view === "history" ? today : undefined,
+      q,
+      page,
+      size: 20,
+      sortDirection: view === "history" ? ("DESC" as const) : ("ASC" as const),
+    };
+  }, [view, q, page]);
+  const reservations = useQuery({
+    queryKey: ["reservation-search", branchId, filters],
+    queryFn: () => searchReservations(branchId!, filters),
+    enabled: !!branchId,
+  });
+  const detail = useQuery({
+    queryKey: ["reservation-detail", selected],
+    queryFn: () => getReservationDetail(selected!),
+    enabled: !!selected,
+  });
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: ["reservation-search"] });
+  const run = async (action: () => Promise<unknown>) => {
+    await action();
+    refresh();
+    queryClient.invalidateQueries({
+      queryKey: ["reservation-detail", selected],
+    });
+  };
+  const metrics = useMemo(
+    () => ({
+      total: reservations.data?.totalElements ?? 0,
+      guests:
+        reservations.data?.content.reduce(
+          (sum, item) => sum + item.cantPersonas,
+          0,
+        ) ?? 0,
+      pending:
+        reservations.data?.content.filter(
+          (item) => item.estado === "PENDIENTE_CONFIRMACION",
+        ).length ?? 0,
+    }),
+    [reservations.data],
+  );
 
-  return <DashboardShell><div className="flex-1 overflow-y-auto p-6"><div className="mx-auto max-w-[1440px]"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Operación diaria</p><h1 className="mt-1 text-3xl font-bold text-on-surface">Reservas</h1><p className="mt-1 text-sm text-on-surface-variant">Consultá, filtrá y operá las reservas de tu local.</p></div></div><div className="mt-6 grid gap-3 sm:grid-cols-3">{[['Reservas', metrics.total], ['Comensales', metrics.guests], ['Pendientes', metrics.pending]].map(([label, value]) => <div key={String(label)} className="rounded-[16px] border border-outline-variant bg-surface-container-lowest p-4"><p className="text-xs font-bold text-on-surface-variant">{label}</p><p className="mt-2 text-2xl font-bold text-on-surface">{value}</p></div>)}</div><div className="mt-6 rounded-[16px] border border-outline-variant bg-surface-container-lowest"><div className="flex flex-wrap items-center gap-3 border-b border-outline-variant p-4"><div className="flex rounded-[8px] bg-surface-container p-1">{(['today', 'future', 'history'] as const).map(item => <button key={item} onClick={() => { setView(item); setPage(0) }} className={`rounded-[7px] px-3 py-2 text-xs font-bold ${view === item ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}>{item === 'today' ? 'Hoy' : item === 'future' ? 'Próximas' : 'Historial'}</button>)}</div><label className="relative ml-auto min-w-[220px]"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-outline"/><input value={q} onChange={event => { setQ(event.target.value); setPage(0) }} placeholder="Buscar cliente o código" className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest py-2 pl-9 pr-3 text-sm text-on-surface placeholder:text-on-surface-dim focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"/></label></div>{!branchId ? <div className="p-12 text-center text-sm text-on-surface-variant">Seleccioná un local para ver sus reservas.</div> : reservations.isLoading ? <div className="p-12 text-center text-sm text-on-surface-variant">Cargando reservas…</div> : <><div className="hidden overflow-x-auto md:block"><table className="w-full text-left"><thead className="border-b border-outline-variant bg-surface-container-low"><tr className="text-xs font-bold text-on-surface-variant"><th className="p-4">Fecha y hora</th><th className="p-4">Cliente</th><th className="p-4">Comensales</th><th className="p-4">Estado</th><th className="p-4">Código</th><th className="p-4"/></tr></thead><tbody>{reservations.data?.content.map(item => <ReservationRow key={item.id} item={item} onSelect={setSelected}/>)}</tbody></table></div><div className="grid gap-3 p-4 md:hidden">{reservations.data?.content.map(item => <button key={item.id} onClick={() => setSelected(item.id)} className="rounded-xl border border-outline-variant p-4 text-left"><p className="font-bold text-on-surface">{item.clienteNombre ?? item.nombreInvitado ?? 'Sin nombre'}</p><p className="mt-1 text-sm text-on-surface-variant">{item.fechaReserva} · {item.horaReserva} · {item.cantPersonas} comensales</p></button>)}</div>{reservations.data?.content.length === 0 && <div className="p-12 text-center text-sm text-on-surface-variant">No hay reservas para estos filtros.</div>}<div className="flex items-center justify-between border-t border-outline-variant p-4 text-sm"><span className="text-on-surface-variant">{reservations.data?.totalElements ?? 0} resultados</span><div className="flex gap-2"><button disabled={page === 0} onClick={() => setPage(value => value - 1)} className="rounded-[8px] border border-outline-variant p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40"><ChevronLeft className="h-4 w-4"/></button><button disabled={!reservations.data || page >= reservations.data.totalPages - 1} onClick={() => setPage(value => value + 1)} className="rounded-[8px] border border-outline-variant p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40"><ChevronRight className="h-4 w-4"/></button></div></div></>}</div></div><AnimatePresence>{selected && <motion.div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><motion.section role="dialog" aria-modal="true" className="max-h-[90svh] w-full max-w-[680px] overflow-y-auto rounded-[16px] bg-surface-container-lowest p-6 shadow-2xl" initial={{scale:.96,y:12}} animate={{scale:1,y:0}} exit={{scale:.96,y:12}}><div className="flex justify-between"><div><p className="text-xs font-bold text-primary">{detail.data?.codigoReserva}</p><h2 className="mt-1 text-xl font-bold text-on-surface">Detalle de reserva</h2></div><button onClick={() => setSelected(null)} aria-label="Cerrar detalle" className="rounded-[8px] p-2 hover:bg-surface-container"><X className="h-5 w-5"/></button></div>{detail.isLoading ? <p className="py-10 text-center text-sm">Cargando…</p> : detail.data && <div className="mt-6 space-y-5"><div className="grid gap-3 sm:grid-cols-2"><Info label="Fecha y hora" value={`${detail.data.fechaReserva} · ${detail.data.horaReserva}`}/><Info label="Comensales" value={String(detail.data.cantPersonas)}/><Info label="Cliente" value={detail.data.contactoNombre ?? '—'}/><Info label="Contacto" value={detail.data.contactoTelefono ?? detail.data.contactoEmail ?? '—'}/></div><div><p className="text-xs font-bold text-on-surface-variant">Observaciones</p><p className="mt-1 text-sm text-on-surface">{detail.data.observaciones || 'Sin observaciones'}</p></div><div className="flex flex-wrap gap-2"><span className={`rounded-full px-3 py-1 text-xs font-bold ${tones[detail.data.estado]}`}>{labels[detail.data.estado]}</span>{detail.data.estado === 'PENDIENTE_CONFIRMACION' && <button onClick={() => run(() => confirmReservation(detail.data.id))} className="rounded-[8px] bg-primary px-3 py-2 text-xs font-bold text-on-primary">Confirmar</button>}{detail.data.estado === 'CONFIRMADA' && <><button onClick={() => run(() => completeReservation(detail.data.id))} className="rounded-[8px] bg-success px-3 py-2 text-xs font-bold text-on-primary">Completar</button><button onClick={() => run(() => noShowReservation(detail.data.id))} className="rounded-[8px] bg-error px-3 py-2 text-xs font-bold text-on-primary">No-show</button></>} {['PENDIENTE_PAGO','PENDIENTE_CONFIRMACION','CONFIRMADA'].includes(detail.data.estado) && <button onClick={() => run(() => cancelReservation(detail.data.id))} className="rounded-[8px] border border-error px-3 py-2 text-xs font-bold text-error">Cancelar</button>}</div></div>}</motion.section></motion.div>}</AnimatePresence></div></DashboardShell>
+  return (
+    <DashboardShell>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Operación diaria
+              </p>
+              <h1 className="mt-1 text-3xl font-bold text-on-surface">
+                Reservas
+              </h1>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Consultá, filtrá y operá las reservas de tu local.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[
+              ["Reservas", metrics.total],
+              ["Comensales", metrics.guests],
+              ["Pendientes", metrics.pending],
+            ].map(([label, value]) => (
+              <div
+                key={String(label)}
+                className="rounded-[16px] border border-outline-variant bg-surface-container-lowest p-4"
+              >
+                <p className="text-xs font-bold text-on-surface-variant">
+                  {label}
+                </p>
+                <p className="mt-2 text-2xl font-bold text-on-surface">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 rounded-[16px] border border-outline-variant bg-surface-container-lowest">
+            <div className="flex flex-wrap items-center gap-3 border-b border-outline-variant p-4">
+              <div className="flex rounded-[8px] bg-surface-container p-1">
+                {(["today", "future", "history"] as const).map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => {
+                      setView(item);
+                      setPage(0);
+                    }}
+                    className={`rounded-[7px] px-3 py-2 text-xs font-bold ${view === item ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant"}`}
+                  >
+                    {item === "today"
+                      ? "Hoy"
+                      : item === "future"
+                        ? "Próximas"
+                        : "Historial"}
+                  </button>
+                ))}
+              </div>
+              <label className="relative ml-auto min-w-[220px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-outline" />
+                <input
+                  value={q}
+                  onChange={(event) => {
+                    setQ(event.target.value);
+                    setPage(0);
+                  }}
+                  placeholder="Buscar cliente o código"
+                  className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest py-2 pl-9 pr-3 text-sm text-on-surface placeholder:text-on-surface-dim focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </label>
+            </div>
+            {!branchId ? (
+              <div className="p-12 text-center text-sm text-on-surface-variant">
+                Seleccioná un local para ver sus reservas.
+              </div>
+            ) : reservations.isLoading ? (
+              <div className="p-12 text-center text-sm text-on-surface-variant">
+                Cargando reservas…
+              </div>
+            ) : (
+              <>
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left">
+                    <thead className="border-b border-outline-variant bg-surface-container-low">
+                      <tr className="text-xs font-bold text-on-surface-variant">
+                        <th className="p-4">Fecha y hora</th>
+                        <th className="p-4">Cliente</th>
+                        <th className="p-4">Comensales</th>
+                        <th className="p-4">Estado</th>
+                        <th className="p-4">Código</th>
+                        <th className="p-4" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reservations.data?.content.map((item) => (
+                        <ReservationRow
+                          key={item.id}
+                          item={item}
+                          onSelect={setSelected}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="grid gap-3 p-4 md:hidden">
+                  {reservations.data?.content.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelected(item.id)}
+                      className="rounded-xl border border-outline-variant p-4 text-left"
+                    >
+                      <p className="font-bold text-on-surface">
+                        {item.clienteNombre ??
+                          item.nombreInvitado ??
+                          "Sin nombre"}
+                      </p>
+                      <p className="mt-1 text-sm text-on-surface-variant">
+                        {item.fechaReserva} · {item.horaReserva} ·{" "}
+                        {item.cantPersonas} comensales
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                {reservations.data?.content.length === 0 && (
+                  <div className="p-12 text-center text-sm text-on-surface-variant">
+                    No hay reservas para estos filtros.
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t border-outline-variant p-4 text-sm">
+                  <span className="text-on-surface-variant">
+                    {reservations.data?.totalElements ?? 0} resultados
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      disabled={page === 0}
+                      onClick={() => setPage((value) => value - 1)}
+                      className="rounded-[8px] border border-outline-variant p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      disabled={
+                        !reservations.data ||
+                        page >= reservations.data.totalPages - 1
+                      }
+                      onClick={() => setPage((value) => value + 1)}
+                      className="rounded-[8px] border border-outline-variant p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <AnimatePresence>
+          {selected && (
+            <motion.div
+              className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.section
+                role="dialog"
+                aria-modal="true"
+                className="max-h-[90svh] w-full max-w-[680px] overflow-y-auto rounded-[16px] bg-surface-container-lowest p-6 shadow-2xl"
+                initial={{ scale: 0.96, y: 12 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.96, y: 12 }}
+              >
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-primary">
+                      {detail.data?.codigoReserva}
+                    </p>
+                    <h2 className="mt-1 text-xl font-bold text-on-surface">
+                      Detalle de reserva
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setSelected(null)}
+                    aria-label="Cerrar detalle"
+                    className="rounded-[8px] p-2 hover:bg-surface-container"
+                  >
+                    <X className="h-5 w-5 text-white"/>
+                  </button>
+                </div>
+                {detail.isLoading ? (
+                  <p className="py-10 text-center text-sm">Cargando…</p>
+                ) : (
+                  detail.data && (
+                    <div className="mt-6 space-y-5">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Info
+                          label="Fecha y hora"
+                          value={`${detail.data.fechaReserva} · ${detail.data.horaReserva}`}
+                        />
+                        <Info
+                          label="Comensales"
+                          value={String(detail.data.cantPersonas)}
+                        />
+                        <Info
+                          label="Cliente"
+                          value={detail.data.contactoNombre ?? "—"}
+                        />
+                        <Info
+                          label="Contacto"
+                          value={
+                            detail.data.contactoTelefono ??
+                            detail.data.contactoEmail ??
+                            "—"
+                          }
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-on-surface-variant">
+                          Observaciones
+                        </p>
+                        <p className="mt-1 text-sm text-on-surface">
+                          {detail.data.observaciones || "Sin observaciones"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span
+                          className={`rounded-full flex items-center px-3 py-1 text-xs font-bold ${tones[detail.data.estado]}`}
+                        >
+                          {labels[detail.data.estado]}
+                        </span>
+                        {detail.data.estado === "PENDIENTE_CONFIRMACION" && (
+                          <button
+                            onClick={() =>
+                              run(() => confirmReservation(detail.data.id))
+                            }
+                            className="rounded-[8px] bg-primary px-3 py-2 text-xs font-bold text-on-primary"
+                          >
+                            Confirmar
+                          </button>
+                        )}
+                        {detail.data.estado === "CONFIRMADA" && (
+                          <>
+                            <button
+                              onClick={() =>
+                                run(() => completeReservation(detail.data.id))
+                              }
+                              className="rounded-[8px] bg-success px-3 py-2 text-xs font-bold text-on-primary"
+                            >
+                              Completar
+                            </button>
+                            <button
+                              onClick={() =>
+                                run(() => noShowReservation(detail.data.id))
+                              }
+                              className="rounded-[8px] bg-error px-3 py-2 text-xs font-bold text-on-primary"
+                            >
+                              No-show
+                            </button>
+                          </>
+                        )}{" "}
+                        {[
+                          "PENDIENTE_PAGO",
+                          "PENDIENTE_CONFIRMACION",
+                          "CONFIRMADA",
+                        ].includes(detail.data.estado) && (
+                          <button
+                            onClick={() =>
+                              run(() => cancelReservation(detail.data.id))
+                            }
+                            className="rounded-[8px] border border-error px-3 py-2 text-xs font-bold text-error"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                )}
+              </motion.section>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </DashboardShell>
+  );
 }
-function ReservationRow({ item, onSelect }: { item: ReservaListItem; onSelect: (id: number) => void }) { return <motion.tr layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="border-b border-outline-variant/80 text-on-surface transition-colors hover:bg-surface-container-high/60"><td className="p-4 text-sm font-semibold text-on-surface">{item.fechaReserva} · {item.horaReserva}</td><td className="p-4 text-sm font-medium text-on-surface">{item.clienteNombre ?? item.nombreInvitado ?? 'Sin nombre'}</td><td className="p-4 text-sm text-on-surface"><span className="inline-flex items-center gap-1"><Users className="h-4 w-4 text-on-surface-variant"/>{item.cantPersonas}</span></td><td className="p-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${tones[item.estado]}`}>{labels[item.estado]}</span></td><td className="p-4 text-xs font-mono text-on-surface-variant">{item.codigoReserva}</td><td className="p-4"><motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} onClick={() => onSelect(item.id)} className="rounded-[8px] px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Ver detalle</motion.button></td></motion.tr> }
-function Info({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-surface-container p-3"><p className="text-xs font-bold text-on-surface-variant">{label}</p><p className="mt-1 text-sm font-semibold text-on-surface">{value}</p></div> }
+function ReservationRow({
+  item,
+  onSelect,
+}: {
+  item: ReservaListItem;
+  onSelect: (id: number) => void;
+}) {
+  return (
+    <motion.tr
+      layout
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18 }}
+      className="border-b border-outline-variant/80 text-on-surface transition-colors hover:bg-surface-container-high/60"
+    >
+      <td className="p-4 text-sm font-semibold text-on-surface">
+        {item.fechaReserva} · {item.horaReserva}
+      </td>
+      <td className="p-4 text-sm font-medium text-on-surface">
+        {item.clienteNombre ?? item.nombreInvitado ?? "Sin nombre"}
+      </td>
+      <td className="p-4 text-sm text-on-surface">
+        <span className="inline-flex items-center gap-1">
+          <Users className="h-4 w-4 text-on-surface-variant" />
+          {item.cantPersonas}
+        </span>
+      </td>
+      <td className="p-4">
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-bold ${tones[item.estado]}`}
+        >
+          {labels[item.estado]}
+        </span>
+      </td>
+      <td className="p-4 text-xs font-mono text-on-surface-variant">
+        {item.codigoReserva}
+      </td>
+      <td className="p-4">
+        <motion.button
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onSelect(item.id)}
+          className="rounded-[8px] px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          Ver detalle
+        </motion.button>
+      </td>
+    </motion.tr>
+  );
+}
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-surface-container p-3">
+      <p className="text-xs font-bold text-on-surface-variant">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-on-surface">{value}</p>
+    </div>
+  );
+}

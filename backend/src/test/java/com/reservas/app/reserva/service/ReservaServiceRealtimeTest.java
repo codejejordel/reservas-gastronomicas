@@ -41,6 +41,7 @@ class ReservaServiceRealtimeTest {
     @Mock private MesaRepository mesaRepository;
     @Mock private AsignacionMesaRepository asignacionMesaRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private ReservaPublicAccessService publicAccessService;
 
     private ReservaService service;
     private Sucursal sucursal;
@@ -48,7 +49,8 @@ class ReservaServiceRealtimeTest {
     @BeforeEach
     void setUp() {
         service = new ReservaService(reservaRepository, clienteRepository, sucursalRepository,
-                configuracionRepository, mesaRepository, asignacionMesaRepository, eventPublisher);
+                configuracionRepository, mesaRepository, asignacionMesaRepository, eventPublisher,
+                publicAccessService);
 
         Restaurante restaurante = new Restaurante();
         restaurante.setId(3L);
@@ -67,6 +69,7 @@ class ReservaServiceRealtimeTest {
         when(sucursalRepository.findById(7L)).thenReturn(Optional.of(sucursal));
         when(configuracionRepository.findBySucursalId(7L)).thenReturn(Optional.of(configuracion));
         when(reservaRepository.existsByCodigoReserva(any())).thenReturn(false);
+        when(publicAccessService.initialize(any(), any())).thenReturn("public-token");
         when(reservaRepository.save(any())).thenAnswer(invocation -> {
             Reserva reserva = invocation.getArgument(0);
             reserva.setId(41L);

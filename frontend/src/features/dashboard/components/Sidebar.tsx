@@ -1,11 +1,12 @@
 import {
   LayoutDashboard,
   CalendarDays,
-  Users,
-  MessageSquare,
+  /*Users,
+  MessageSquare,*/
   ListTodo,
   Sparkles,
   Settings,
+  UserRoundCog,
   ChevronRight,
   UtensilsCrossed,
   X,
@@ -16,13 +17,14 @@ import { useCurrentUser } from '@/features/auth/store/authStore'
 const navGeneral = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { label: 'Reservas', icon: CalendarDays, href: '/dashboard/reservas' },
-  { label: 'Mesas', icon: Users, href: '#' },
-  { label: 'Mensajes', icon: MessageSquare, href: '#' },
+  /*{ label: 'Mesas', icon: Users, href: '#' },
+  { label: 'Mensajes', icon: MessageSquare, href: '#' },*/
 ]
 
 const navMore = [
   { label: 'Calendario', icon: ListTodo, href: '#' },
-  { label: 'Configuración', icon: Settings, href: '/dashboard/configuracion' },
+  { label: 'Usuarios', icon: UserRoundCog, href: '/dashboard/usuarios', adminOnly: true },
+  { label: 'Configuración', icon: Settings, href: '/dashboard/configuracion', adminOnly: true },
 ]
 
 const team = [
@@ -98,7 +100,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           Más
         </p>
         <nav className="flex flex-col gap-0.5">
-          {navMore.filter(item => item.label !== 'Configuración' || canManageSettings).map((item) => (
+          {navMore.filter(item => !item.adminOnly || canManageSettings).map((item) => (
             <button
               key={item.label}
               onClick={() => { navigate({ to: item.href }); onClose?.() }}

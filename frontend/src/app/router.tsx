@@ -13,6 +13,7 @@ import { ReservationsPage } from '@/features/reservations/ReservationsPage'
 import { SetupWizardLayout } from '@/features/setup/components/SetupWizardLayout'
 import { BookingWizard } from '@/features/booking/BookingWizard'
 import { BookingSuccessWrapper } from '@/features/booking/BookingSuccessWrapper'
+import { ReservationStatusPage } from '@/features/booking/components/status/ReservationStatusPage'
 import {
   PaymentFailedReturn,
   PaymentPendingReturn,
@@ -20,6 +21,7 @@ import {
 } from '@/features/booking/components/payment/PaymentReturnPage'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { SettingsPage } from '@/features/settings/SettingsPage'
+import { UsersPage } from '@/features/users/UsersPage'
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -77,6 +79,7 @@ const requireSettingsRole = () => {
 }
 
 const reservationsRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/reservas', component: ReservationsPage })
+const usersRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/usuarios', beforeLoad: requireSettingsRole, component: UsersPage })
 const settingsRestaurantRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/restaurante', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="restaurante" /> })
 const settingsBranchesRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/locales', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="locales" /> })
 const settingsSchedulesRoute = createRoute({ getParentRoute: () => protectedRoute, path: '/dashboard/configuracion/horarios', beforeLoad: requireSettingsRole, component: () => <SettingsPage section="horarios" /> })
@@ -105,7 +108,15 @@ const bookingRoute = createRoute({
 const bookingSuccessRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/r/$slug/reservar/exito/$codigo',
+  validateSearch: (search: Record<string, unknown>) => ({ token: typeof search.token === 'string' ? search.token : undefined }),
   component: BookingSuccessWrapper,
+})
+
+const reservationStatusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reserva/$codigo',
+  validateSearch: (search: Record<string, unknown>) => ({ token: typeof search.token === 'string' ? search.token : undefined }),
+  component: ReservationStatusPage,
 })
 
 const paymentSuccessfulRoute = createRoute({
@@ -130,9 +141,10 @@ const routeTree = rootRoute.addChildren([
   authRoute.addChildren([loginRoute, registerRoute]),
   indexRoute,
   forgotPasswordRoute,
-  protectedRoute.addChildren([dashboardRoute, reservationsRoute, settingsIndexRoute, settingsRestaurantRoute, settingsBranchesRoute, settingsSchedulesRoute, settingsTablesRoute, settingsRulesRoute, settingsBrandRoute, setupRoute]),
+  protectedRoute.addChildren([dashboardRoute, reservationsRoute, usersRoute, settingsIndexRoute, settingsRestaurantRoute, settingsBranchesRoute, settingsSchedulesRoute, settingsTablesRoute, settingsRulesRoute, settingsBrandRoute, setupRoute]),
   bookingRoute,
   bookingSuccessRoute,
+  reservationStatusRoute,
   paymentSuccessfulRoute,
   paymentPendingRoute,
   paymentFailedRoute,

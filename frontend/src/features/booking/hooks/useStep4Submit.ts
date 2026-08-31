@@ -1,20 +1,18 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { ApiError } from '@/shared/api/apiClient'
 import { useBooking } from '../state/BookingContext'
 import { useCrearReserva } from './useCrearReserva'
-import { crearPreferenciaPago, type ReservaResponse } from '../services/bookingApi'
-import { getSafeMercadoPagoCheckoutUrl } from '../utils/mercadoPagoCheckout'
+import type { ReservaResponse } from '../services/bookingApi'
 
 export function useStep4Submit() {
   const navigate = useNavigate()
   const { slug: slugFromUrl } = useParams({ from: '/r/$slug/reservar' })
   const { sucursal, fecha, hora, partySize, cliente, metodoPago, acceptedTerms, setAcceptedTerms, setError, goToStep } = useBooking()
   const { mutateAsync: crearReserva, isPending: reservationPending } = useCrearReserva()
-  const [preferencePending, setPreferencePending] = useState(false)
   const createdReservationRef = useRef<ReservaResponse | null>(null)
   const submissionInFlightRef = useRef(false)
-  const submitting = reservationPending || preferencePending
+  const submitting = reservationPending
 
   const canSubmit =
     !!sucursal &&
@@ -48,22 +46,11 @@ export function useStep4Submit() {
         createdReservationRef.current = reserva
       }
 
-      if (reserva.estado === 'PENDIENTE_PAGO') {
-        setPreferencePending(true)
-        const pago = await crearPreferenciaPago(reserva.codigoReserva)
-        const checkoutUrl = getSafeMercadoPagoCheckoutUrl(pago.linkPago)
-
-        if (!checkoutUrl) {
-          throw new Error('Invalid Mercado Pago checkout URL')
-        }
-
-        window.location.assign(checkoutUrl)
-      } else {
-        await navigate({
-          to: '/r/$slug/reservar/exito/$codigo',
-          params: { slug: slugFromUrl, codigo: reserva.codigoReserva },
-        })
-      }
+      await navigate({
+        to: '/r/$slug/reservar/exito/$codigo',
+        params: { slug: slugFromUrl, codigo: reserva.codigoReserva },
+        search: { token: reserva.accessToken },
+      })
     } catch (err: unknown) {
       const reserva = createdReservationRef.current
 
@@ -78,7 +65,6 @@ export function useStep4Submit() {
         setError('Error al crear la reserva. Intentá de nuevo.')
       }
     } finally {
-      setPreferencePending(false)
       submissionInFlightRef.current = false
     }
   }
